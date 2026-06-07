@@ -51,6 +51,9 @@
 
 - `function`
 - `let`
+- `for`
+- `while`
+- `do`
 - `return`
 - `if`
 - `else`
@@ -58,13 +61,7 @@
 - `true`
 - `macro`
 
-## 3.操作码
-
-## 4.二进制格式
-
-**sign: fallscript**
-
-## 5.表达式
+## 3.表达式
 
 - `1+1`
 - `1-1`
@@ -83,3 +80,37 @@
 - `1!=1`
 - `(1>1) && (1<1)`
 - `(1>1) || (1<1)`
+- `a`
+- `a = 1`
+- `a[0]`
+- `[1,2,3]`
+- `{a:1, b:2,true:1, false:2, 1:1, 2:2, "abc":12}`
+- `fn(...){...}`
+- `if(..){...}else if (...){...}else {...}`
+
+## 4. 运算符优先级
+
+- `LOWEST`
+- `ASSIGN_ (=)`
+- `LOGIC (&&, ||)`
+- `EQUALS (==, !=)`
+- `LESSGREATER (>, >=, <, <=)`
+- `SUM(+, -)`
+- `PRODUCT(*, /)`
+- `PREFIX(-, !)`
+- `CALL(fn())`
+- `INDEX(array[index])`
+
+## 5.语句
+
+- `let a = 表达式;`
+- `for(xx;xx;xx){...}`
+- `while(xx){...}`
+- `do{...}while(xx)`
+- `return xx;`
+
+## 6.操作码
+
+## 7.二进制格式
+
+**sign: fallscript**

@@ -32,6 +32,7 @@ const (
 	RBRACE    = "}"
 	COMMA     = ","
 
+	NULL     = "NULL"
 	INT      = "INT"
 	STRING   = "STRING"
 	IDENT    = "IDENT"
@@ -42,18 +43,25 @@ const (
 	TRUE     = "TRUE"
 	FALSE    = "FALSE"
 	RETURN   = "RETURN"
+	FOR      = "FOR"
+	WHILE    = "WHILE"
+	DO       = "DO"
 	MACRO    = "MACRO"
 )
 
 var keyword = map[string]TokenType{
 	"fn":     FUNCTION,
 	"let":    LET,
+	"for":    FOR,
+	"while":  WHILE,
+	"do":     DO,
 	"true":   TRUE,
 	"false":  FALSE,
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,
 	"macro":  MACRO,
+	"null":   NULL,
 }
 
 type Token struct {
