@@ -1,14 +1,45 @@
 package rt
 
 type Stack struct {
-	top *Frame
+	top     *Frame
+	maxSize int
+	size    int
 }
 
-func NewStack() *Stack {
-	return &Stack{}
+func NewStack(maxSize int) *Stack {
+	return &Stack{
+		maxSize: maxSize,
+	}
 }
 
-func (s *Stack) PushFrame(frame *Frame) {
-	frame.Lower = s.top
-	s.top = frame
+func (s *Stack) PushFrame(f *Frame) {
+	s.isOutOfStack()
+	f.SetLower(s.top)
+	s.top = f
+	s.size++
+}
+
+func (s *Stack) PopFrame() *Frame {
+	if s.top == nil {
+		return nil
+	}
+
+	cur := s.top
+	s.top = s.top.lower
+	if cur.lower != nil {
+		cur.lower = nil
+	}
+	s.size--
+
+	return cur
+}
+
+func (s *Stack) IsEmpty() bool {
+	return s.size == 0
+}
+
+func (s *Stack) isOutOfStack() {
+	if s.size >= s.maxSize {
+		panic("out of stack")
+	}
 }

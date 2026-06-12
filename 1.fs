@@ -21,6 +21,7 @@ for (let i = 1; i < 3; i = i + 1) {
   a = a+i
 }
 
+
 while(a < 5) {
   a = a+1
 }
@@ -29,8 +30,7 @@ do {
     a = a+1
 } while(a < 10)
 
-a
 
-/*
- *
-*/
+puts(a)
+
+

@@ -7,11 +7,7 @@ type ByteReader struct {
 	pc   int
 }
 
-func NewByteReader() *ByteReader {
-	return &ByteReader{}
-}
-
-func (br *ByteReader) PC() int {
+func (br *ByteReader) Pc() int {
 	return br.pc
 }
 
@@ -21,13 +17,14 @@ func (br *ByteReader) Reset(code []byte, pc int) {
 }
 
 func (br *ByteReader) ReadUint8() uint8 {
-	i := br.code[br.pc]
+	data := br.code[br.pc]
 	br.pc++
-	return i
+
+	return data
 }
 
 func (br *ByteReader) ReadUint16() uint16 {
-	v := binary.BigEndian.Uint16(br.code[br.pc:])
+	data := binary.BigEndian.Uint16(br.code[br.pc:])
 	br.pc += 2
-	return v
+	return data
 }

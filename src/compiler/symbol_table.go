@@ -1,0 +1,117 @@
+package compiler
+
+type (
+	SymbolScope      string
+	SymbolTableScope string
+)
+
+const (
+	BLOCK    SymbolTableScope = "BLOCK"
+	FUNCTION                  = "FUNCTION"
+)
+
+const (
+	GLOBAL  SymbolScope = "GLOBAL"
+	LOCAL               = "LOCAL"
+	BUILTIN             = "BUILTIN"
+	FREE                = "FREE"
+)
+
+type Symbol struct {
+	Name  string
+	Pos   int
+	Scope SymbolScope
+}
+
+type SymbolTable struct {
+	outer       *SymbolTable
+	store       map[string]Symbol
+	globalNum   int
+	defNum      int
+	maxNum      int
+	FreeSymbols []Symbol
+	scope       SymbolTableScope
+}
+
+func (st *SymbolTable) DefNum() int {
+	return st.defNum
+}
+
+func (st *SymbolTable) MaxNum() int {
+	return st.maxNum
+}
+
+func NewSymbolTable() *SymbolTable {
+	store := make(map[string]Symbol)
+	fs := []Symbol{}
+	st := &SymbolTable{store: store, FreeSymbols: fs, scope: BLOCK}
+	return st
+}
+
+func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
+	newSt := NewSymbolTable()
+	newSt.outer = outer
+	return newSt
+}
+
+func NewEnclosedSymbolTableForFn(outer *SymbolTable) *SymbolTable {
+	newSt := NewSymbolTable()
+	newSt.outer = outer
+	newSt.scope = FUNCTION
+	return newSt
+}
+
+func (st *SymbolTable) Define(name string) Symbol {
+	symbol := Symbol{Name: name, Pos: st.defNum}
+
+	if st.outer == nil {
+		symbol.Scope = GLOBAL
+		symbol.Pos = st.globalNum
+		st.globalNum++
+	} else {
+		symbol.Scope = LOCAL
+		st.defNum++
+		if st.maxNum < st.defNum {
+			st.maxNum = st.defNum
+		}
+	}
+
+	st.store[name] = symbol
+	return symbol
+}
+
+func (st *SymbolTable) Resolve(name string) (Symbol, bool) {
+	sym, ok := st.store[name]
+
+	if !ok && st.outer != nil {
+		sym, ok = st.outer.Resolve(name)
+
+		if !ok {
+			return sym, ok
+		}
+
+		if sym.Scope == GLOBAL || st.scope == BLOCK {
+			return sym, ok
+		}
+
+		free := st.defineFree(sym)
+		return free, true
+	}
+
+	return sym, ok
+}
+
+func (st *SymbolTable) defineFree(origin Symbol) Symbol {
+	st.FreeSymbols = append(st.FreeSymbols, origin)
+
+	free := Symbol{Name: origin.Name, Pos: len(st.FreeSymbols) - 1, Scope: FREE}
+	st.store[origin.Name] = free
+
+	return free
+}
+
+func (st *SymbolTable) defineBuiltin(index int, name string) Symbol {
+	sym := Symbol{Name: name, Pos: index, Scope: BUILTIN}
+	st.store[name] = sym
+	return sym
+}

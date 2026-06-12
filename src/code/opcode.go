@@ -1,13 +1,44 @@
 package code
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 type OpCode byte
 
 const (
-	NOP OpCode = iota
-	CONST
-	LOAD
+	Nop OpCode = iota
+	Null_
+	Const
+	Pop
+	Gt
+	Ge
+	Add
+	Sub
+	Mul
+	Div
+	Eq
+	Neq
+	Neg
+	Not
+	True
+	False
+	Array_
+	Hash_
+	Index
+	Call
+	Jump
+	JumpIsFalse
+	SetGlobal
+	GetGlobal
+	SetLocal
+	GetLocal
+	GetFree
+	GetBuiltin
+	Closure_
+	Dup
+	Return
+	XReturn
 )
 
 func Make(op OpCode, operands ...int) []byte {

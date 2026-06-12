@@ -6,12 +6,15 @@ import (
 )
 
 type Const struct {
-	Index uint16
+	index int
 }
 
 func (c *Const) FetchOperand(br *base.ByteReader) {
-	c.Index = br.ReadUint16()
+	idx := br.ReadUint16()
+	c.index = int(idx)
 }
 
-func (c *Const) Exeucte(frame *rt.Frame) {
+func (c *Const) Execute(frame *rt.Frame) {
+	data := frame.GetConst(c.index)
+	frame.PushStack(data)
 }

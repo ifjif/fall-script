@@ -1,26 +1,60 @@
 package vm
 
 import (
+	"zzc/fall-script/src/builtin"
 	"zzc/fall-script/src/compiler"
+	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/vm/rt"
-	"zzc/fall-script/src/vm/rt/heap"
+)
+
+const (
+	MAX_FRAMS   = 1024
+	GLOBAL_SIZE = 65535
 )
 
 type FsVM struct {
-	thread *rt.Thread
+	builtins   []*builtin.BuiltinDef
+	globals    []object.Object
+	mainThread *rt.Thread
 }
 
 func NewFsVM(c *compiler.Compiler) *FsVM {
-	cp := heap.NewConstPool(c.Constants)
-	p := heap.NewPrototype(c.Instructions, cp)
-	thread := rt.NewThread()
-	frame := rt.NewFrame(p.Bytecode)
-	thread.Stack.PushFrame(frame)
-	return &FsVM{
-		thread: thread,
+	locals := c.SymbolTable.MaxNum()
+	insts := c.CurrentInstructions()
+	consts := c.CurrentConstant()
+	stackDepth := c.CurrentStackDepth()
+	globals := make([]object.Object, GLOBAL_SIZE)
+
+	compileFn := &object.CompiledFunction{
+		Instructions: insts,
+		Constants:    consts,
+		LocalsNum:    locals,
+		ParamsNum:    0,
+		StackDepth:   stackDepth,
 	}
+
+	mainClosure := &object.Closure{
+		Fn:   compileFn,
+		Free: []object.Object{},
+	}
+
+	fv := &FsVM{
+		globals:  globals,
+		builtins: c.Builtins,
+	}
+
+	mainThread := fv.NewThread()
+	mainFrame := mainThread.NewFrame(mainClosure)
+	mainThread.PushFrame(mainFrame)
+
+	fv.mainThread = mainThread
+	return fv
+}
+
+func (fv *FsVM) NewThread() *rt.Thread {
+	return rt.NewThread(MAX_FRAMS, fv.globals, fv.builtins)
 }
 
 func (fv *FsVM) Run() {
-	interpreter(fv.thread)
+	interpreter(fv.mainThread)
 }
