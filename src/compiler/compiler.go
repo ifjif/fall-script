@@ -1,9 +1,11 @@
 package compiler
 
 import (
+	"fmt"
+
 	. "zzc/fall-script/src/ast"
 	"zzc/fall-script/src/builtin"
-	_ "zzc/fall-script/src/builtin"
+	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/code"
 	. "zzc/fall-script/src/code"
 	"zzc/fall-script/src/object"
@@ -24,7 +26,7 @@ func NewCompiler(program Node) *Compiler {
 	st := NewSymbolTable()
 	mainScope := NewScope()
 
-	for i, fn := range builtin.Builtins {
+	for i, fn := range vmb.Builtins {
 		st.defineBuiltin(i, fn.Name)
 	}
 
@@ -33,7 +35,7 @@ func NewCompiler(program Node) *Compiler {
 		SymbolTable: st,
 		scopes:      []*Scope{mainScope},
 		scopeIndex:  0,
-		Builtins:    builtin.Builtins,
+		Builtins:    vmb.Builtins,
 	}
 }
 
@@ -183,13 +185,23 @@ func (c *Compiler) compileReturnStmt(stmt *ReturnStmt) {
 }
 
 func (c *Compiler) compileAssignExpr(expr *AssignExpr) {
-	sym, ok := c.SymbolTable.Resolve(expr.Name.Value)
-	if !ok {
-		// todo
+	left := expr.Left
+	switch left := left.(type) {
+	case *IdentExpr:
+		sym, ok := c.SymbolTable.Resolve(left.Value)
+		if !ok {
+			// todo
+			panic(fmt.Sprintf("Error: Identifier not found: %q", left.Value))
+		}
+		c.doCompile(expr.Value)
+		c.storeSymbol(sym)
+		c.loadSymbol(sym)
+	case *IndexExpr:
+		c.doCompile(left.Left)
+		c.doCompile(left.Index)
+		c.doCompile(expr.Value)
+		c.emit(code.SetIndex)
 	}
-	c.doCompile(expr.Value)
-	c.storeSymbol(sym)
-	c.loadSymbol(sym)
 }
 
 func (c *Compiler) compileIntExpr(expr *IntExpr) {
@@ -359,11 +371,14 @@ func (c *Compiler) compileIfExpr(expr *IfExpr) {
 
 func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	var mSym Symbol
-	if expr.Name != "" {
+	if !expr.UnName {
 		mSym = c.SymbolTable.Define(expr.Name)
 	}
 
 	c.enterScope()
+	if expr.Name != "" {
+		c.SymbolTable.defineFunction(expr.Name)
+	}
 
 	for _, param := range expr.Params {
 		c.SymbolTable.Define(param.Value)
@@ -383,10 +398,6 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	maxStackDepth := c.currentScope().MaxStackDepth
 	insts := c.leaveScope()
 
-	for _, sym := range freeTable {
-		c.loadSymbol(sym)
-	}
-
 	cf := &object.CompiledFunction{
 		Instructions: insts,
 		Constants:    consts,
@@ -397,9 +408,13 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 
 	cfIdx := c.addConstant(cf)
 
+	for _, sym := range freeTable {
+		c.loadSymbol(sym)
+	}
+
 	c.emit(Closure_, cfIdx, len(freeTable))
 
-	if mSym.Name != "" {
+	if !expr.UnName {
 		c.emit(Dup)
 		c.storeSymbol(mSym)
 	}

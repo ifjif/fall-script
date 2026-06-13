@@ -34,7 +34,12 @@ func (p *Parser) parseLetStmt() StmtNode {
 	if p.peekTypeIs(ASSIGN) {
 		p.nextToken()
 		p.nextToken()
-		stmt.Value = p.parseExpr(LOWEST)
+		value := p.parseExpr(LOWEST)
+		fn, ok := value.(*FnExpr)
+		if ok && fn.UnName {
+			fn.Name = stmt.Name.Value
+		}
+		stmt.Value = value
 	}
 
 	if p.peekTypeIs(SEMICOLON) {

@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	. "zzc/fall-script/src/ast"
+	"zzc/fall-script/src/builtin/evalb"
 	"zzc/fall-script/src/object"
 	. "zzc/fall-script/src/object"
 )
@@ -105,6 +106,8 @@ func (e *Evaluator) evalLetStmt(stmt *LetStmt) Object {
 		return value
 	}
 
+	value = unwrapReturnValue(value)
+
 	e.env.Set(name, value)
 
 	return nil
@@ -203,12 +206,15 @@ func (e *Evaluator) evalReturnStmt(stmt *ReturnStmt) Object {
 
 func (e *Evaluator) evalIdentExpr(node *IdentExpr) Object {
 	name := node.Value
-	result, ok := e.env.Get(name)
-	if !ok {
-		return e.identifierNotFoundErr(name)
+	if result, ok := e.env.Get(name); ok {
+		return result
 	}
 
-	return result
+	if result, ok := evalb.Builtins[name]; ok {
+		return result
+	}
+
+	return e.identifierNotFoundErr(name)
 }
 
 func (e *Evaluator) evalInteger(node *IntExpr) Object {
@@ -227,21 +233,58 @@ func (e *Evaluator) evalString(node *StrExpr) Object {
 }
 
 func (e *Evaluator) evalAssignExpr(node *AssignExpr) Object {
-	name := node.Name.Value
+	left := node.Left
 
-	_, ok := e.env.Get(name)
-	if !ok {
-		return e.identifierNotFoundErr(name)
-	}
+	switch left := left.(type) {
+	case *IdentExpr:
+		name := left.Value
 
-	value := e.eval(node.Value)
-	if isError(value) {
+		_, ok := e.env.Get(name)
+		if !ok {
+			return e.identifierNotFoundErr(name)
+		}
+
+		value := e.eval(node.Value)
+		if isError(value) {
+			return value
+		}
+
+		value = unwrapReturnValue(value)
+
+		e.env.ExitsSet(name, value)
 		return value
+	case *IndexExpr:
+		container := e.eval(left.Left)
+		index := e.eval(left.Index)
+		value := e.eval(node.Value)
+		value = unwrapReturnValue(value)
+
+		switch {
+		case container.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
+			arr := container.(*object.Array)
+			idx := index.(*object.Integer)
+
+			if idx.Value < 0 || idx.Value >= int64(len(arr.Elems)) {
+				return e.indexOutOfBoundErr(arr, idx)
+			}
+			arr.Elems[idx.Value] = value
+			return value
+		case container.Type() == object.HASH_OBJ:
+			hash := container.(*object.Hash)
+			key, ok := index.(object.HashTableKey)
+			if !ok {
+				return e.unusableAsHashKeyErr(index)
+			}
+			pair := object.HashPair{Key: index, Value: value}
+			hash.Pairs[key.HashKey()] = pair
+			return value
+		default:
+			return e.unsupportedAssignOperation(container)
+		}
 	}
 
-	e.env.ExitsSet(name, value)
-
-	return value
+	// 不会执行到此
+	return object.NULL
 }
 
 func (e *Evaluator) evalInfixExpr(node *InfixExpr) Object {
@@ -353,18 +396,12 @@ func (e *Evaluator) evalCallExpr(node *CallExpr) Object {
 		return fn
 	}
 
-	fnObj, ok := fn.(*Function)
-
-	if !ok {
-		return e.notAFunctionErr(fn)
-	}
-
 	args := e.evalExprList(node.Args)
 	if len(args) == 1 && isError(args[0]) {
 		return args[0]
 	}
 
-	return e.applyFunction(fnObj, args)
+	return e.applyFunction(fn, args)
 }
 
 func (e *Evaluator) evalIfExpr(node *IfExpr) Object {
@@ -374,10 +411,12 @@ func (e *Evaluator) evalIfExpr(node *IfExpr) Object {
 	}
 
 	if objectToBool(cond) {
-		return unwrapReturnValue(e.eval(node.Consequence))
-	} else {
-		return unwrapReturnValue(e.eval(node.Alternative))
+		return e.eval(node.Consequence)
+	} else if node.Alternative != nil {
+		return e.eval(node.Alternative)
 	}
+
+	return object.NULL
 }
 
 func (e *Evaluator) evalExprList(nodes []ExprNode) []Object {

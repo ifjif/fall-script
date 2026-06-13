@@ -39,6 +39,10 @@ func (f *Frame) Code() code.Instructions {
 	return f.closure.Fn.Instructions
 }
 
+func (f *Frame) Closure() *object.Closure {
+	return f.closure
+}
+
 func (f *Frame) NextPc() int {
 	return f.nextPc
 }

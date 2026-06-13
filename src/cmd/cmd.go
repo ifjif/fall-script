@@ -34,11 +34,11 @@ func (c *Cmd) Execute() {
 	}
 
 	eval := evaluator.NewEvaluator(program, env)
-	obj := eval.Evaluate()
+	eval.Evaluate()
 
-	if obj != nil {
-		fmt.Println(obj.Inspect())
-	}
+	//if obj != nil {
+	//	fmt.Println(obj.Inspect())
+	//}
 }
 
 func (c *Cmd) Interprete() {

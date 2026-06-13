@@ -8,7 +8,7 @@ import (
 
 type AssignExpr struct {
 	Token token.Token
-	Name  *IdentExpr
+	Left  ExprNode // ident / index
 	Value ExprNode
 }
 
@@ -25,7 +25,7 @@ func (ae *AssignExpr) GetToken() token.Token {
 func (ae *AssignExpr) String() string {
 	var buf bytes.Buffer
 
-	buf.WriteString(ae.Name.String())
+	buf.WriteString(ae.Left.String())
 	buf.WriteString(" = ")
 	buf.WriteString(ae.Value.String())
 

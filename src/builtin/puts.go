@@ -6,7 +6,7 @@ import (
 	"zzc/fall-script/src/object"
 )
 
-func puts(args ...object.Object) object.Object {
+func Puts(args ...object.Object) object.Object {
 	for _, arg := range args {
 		fmt.Println(arg.Inspect())
 	}

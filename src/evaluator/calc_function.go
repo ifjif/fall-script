@@ -1,14 +1,23 @@
 package evaluator
 
-import . "zzc/fall-script/src/object"
+import (
+	. "zzc/fall-script/src/object"
+)
 
-func (e *Evaluator) applyFunction(fn *Function, args []Object) Object {
-	curEnv := e.env
-	env := extendFunctionEnv(fn, args)
-	e.env = env
-	result := unwrapReturnValue(e.eval(fn.Body))
-	e.env = curEnv
-	return result
+func (e *Evaluator) applyFunction(fn Object, args []Object) Object {
+	switch fn := fn.(type) {
+	case *Function:
+		curEnv := e.env
+		env := extendFunctionEnv(fn, args)
+		e.env = env
+		result := unwrapReturnValue(e.eval(fn.Body))
+		e.env = curEnv
+		return result
+	case *Builtin:
+		return fn.Fn(args...)
+	}
+
+	return e.notAFunctionErr(fn)
 }
 
 func extendFunctionEnv(fn *Function, args []Object) *Environment {

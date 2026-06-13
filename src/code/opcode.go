@@ -35,7 +35,9 @@ const (
 	GetLocal
 	GetFree
 	GetBuiltin
+	SetIndex
 	Closure_
+	CurClosure
 	Dup
 	Return
 	XReturn

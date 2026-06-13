@@ -44,6 +44,12 @@ func (e *Evaluator) unsupportedIndexOperationErr(left, index Object) *ErrorObj {
 	return NewError("Error(unsupported index operation): %s[%s] at line %d, column %d", leftMsg, indexMsg, token.Line, token.Col)
 }
 
+func (e *Evaluator) unsupportedAssignOperation(left Object) *ErrorObj {
+	token := e.curNode.GetToken()
+	leftMsg := objectMsg(left)
+	return NewError("Error(unsupported assign operation): %s = ... ast line %d, column %d", leftMsg, token.Line, token.Col)
+}
+
 func (e *Evaluator) identifierNotFoundErr(name string) *ErrorObj {
 	token := e.curNode.GetToken()
 	return NewError("Error(identifier not found): %q at line %d, column %d", name, token.Line, token.Col)

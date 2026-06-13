@@ -6,15 +6,16 @@ type (
 )
 
 const (
-	BLOCK    SymbolTableScope = "BLOCK"
-	FUNCTION                  = "FUNCTION"
+	BLOCK    = "BLOCK"
+	FUNCTION = "FUNCTION"
 )
 
 const (
-	GLOBAL  SymbolScope = "GLOBAL"
-	LOCAL               = "LOCAL"
-	BUILTIN             = "BUILTIN"
-	FREE                = "FREE"
+	GLOBAL  = "GLOBAL"
+	LOCAL   = "LOCAL"
+	BUILTIN = "BUILTIN"
+	FREE    = "FREE"
+	FN      = "FN"
 )
 
 type Symbol struct {
@@ -112,6 +113,12 @@ func (st *SymbolTable) defineFree(origin Symbol) Symbol {
 
 func (st *SymbolTable) defineBuiltin(index int, name string) Symbol {
 	sym := Symbol{Name: name, Pos: index, Scope: BUILTIN}
+	st.store[name] = sym
+	return sym
+}
+
+func (st *SymbolTable) defineFunction(name string) Symbol {
+	sym := Symbol{Name: name, Pos: 0, Scope: FN}
 	st.store[name] = sym
 	return sym
 }

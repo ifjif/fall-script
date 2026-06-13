@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 
+	"zzc/fall-script/src/ast"
 	"zzc/fall-script/src/token"
 	. "zzc/fall-script/src/token"
 )
@@ -30,6 +31,19 @@ func (p *Parser) intParseErr(token Token) {
 func (p *Parser) expectedIdentifierErr(token Token) {
 	msg := p.parseErr(ASSIGN, token)
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) expectedLeftSideValue(expr ast.Node) bool {
+	switch expr.(type) {
+	case *ast.IdentExpr, *ast.IndexExpr:
+		return true
+	}
+	curToken := expr.GetToken()
+	msg := fmt.Sprintf("Error: Expected left side for assign is '%s' token , infix '%s' token, buf found '%s' at line %d, column %d",
+		token.IDENT, token.LBRACKET, curToken.Type, curToken.Line, curToken.Col)
+	p.errors = append(p.errors, msg)
+
+	return false
 }
 
 func (p *Parser) parseErr(expectedTokentType TokenType, token Token) string {

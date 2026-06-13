@@ -113,6 +113,8 @@ func (c *Compiler) loadSymbol(sym Symbol) {
 		c.emit(code.GetFree, sym.Pos)
 	case BUILTIN:
 		c.emit(code.GetBuiltin, sym.Pos)
+	case FN:
+		c.emit(code.CurClosure)
 	}
 }
 

@@ -18,25 +18,27 @@ import (
 )
 
 var (
-	nop    = &Nop{}
-	null   = &Null{}
-	pop    = &Pop{}
-	gt     = &Gt{}
-	ge     = &Ge{}
-	add    = &Add{}
-	sub    = &Sub{}
-	mul    = &Mul{}
-	div    = &Div{}
-	eq     = &Eq{}
-	neq    = &Neq{}
-	neg    = &Neg{}
-	not    = &Not{}
-	true_  = &True{}
-	false_ = &False{}
-	index  = &Index{}
-	dup    = &Dup{}
-	ret    = &Return{}
-	xret   = &XReturn{}
+	nop         = &Nop{}
+	null        = &Null{}
+	pop         = &Pop{}
+	gt          = &Gt{}
+	ge          = &Ge{}
+	add         = &Add{}
+	sub         = &Sub{}
+	mul         = &Mul{}
+	div         = &Div{}
+	eq          = &Eq{}
+	neq         = &Neq{}
+	neg         = &Neg{}
+	not         = &Not{}
+	true_       = &True{}
+	false_      = &False{}
+	index       = &Index{}
+	set_index   = &SetIndex{}
+	dup         = &Dup{}
+	cur_closure = &CurClosure{}
+	ret         = &Return{}
+	xret        = &XReturn{}
 )
 
 func NewInstruction(opcode byte) base.Instruction {
@@ -97,8 +99,12 @@ func NewInstruction(opcode byte) base.Instruction {
 		return &GetFree{}
 	case code.GetBuiltin:
 		return &GetBuiltin{}
+	case code.SetIndex:
+		return set_index
 	case code.Closure_:
 		return &Closure{}
+	case code.CurClosure:
+		return cur_closure
 	case code.Dup:
 		return dup
 	case code.Return:

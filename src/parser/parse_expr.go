@@ -31,12 +31,10 @@ func (p *Parser) parseExpr(precedence Precedence) ExprNode {
 }
 
 func (p *Parser) parseAssignExpr(left ExprNode) ExprNode {
-	ident, ok := left.(*IdentExpr)
-	if !ok {
-		p.expectedIdentifierErr(left.GetToken())
+	if !p.expectedLeftSideValue(left) {
 		return nil
 	}
-	expr := &AssignExpr{Token: p.curToken, Name: ident}
+	expr := &AssignExpr{Token: p.curToken, Left: left}
 	p.nextToken()
 	expr.Value = p.parseExpr(LOWEST)
 
@@ -128,6 +126,8 @@ func (p *Parser) parseFnExpr() ExprNode {
 		p.nextToken()
 		ident := p.parseIdentExpr().(*IdentExpr)
 		expr.Name = ident.Value
+	} else {
+		expr.UnName = true
 	}
 
 	if !p.expectPeek(LPAREN) {

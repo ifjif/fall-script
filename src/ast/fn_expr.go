@@ -12,6 +12,7 @@ type FnExpr struct {
 	Name   string
 	Params []*IdentExpr
 	Body   *BlockStmt
+	UnName bool
 }
 
 func (fe *FnExpr) ExprNode() {}
