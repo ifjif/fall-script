@@ -11,6 +11,7 @@ func main() {
 	cmd := cmd.Cmd{}
 	flag.StringVar(&cmd.File, "f", "", "指定执行文件")
 	flag.StringVar(&cmd.Engine, "engine", "vm", "指定执行引擎 -engine vm / -engine eval")
+	flag.BoolVar(&cmd.Dump, "c", false, "编译为字节码")
 	flag.Parse()
 	if cmd.File != "" {
 		if cmd.Engine == "eval" {

@@ -24,7 +24,7 @@
   1. `&&`
   2. `||`
 
-- **位运算符**
+- **位运算符(不支持)**
   1. `&`
   2. `|`
 
@@ -49,7 +49,7 @@
 
 ## 2.关键字
 
-- `function`
+- `fn`
 - `let`
 - `for`
 - `while`
@@ -59,7 +59,8 @@
 - `else`
 - `false`
 - `true`
-- `macro`
+- `null`
+- `macro(不支持)`
 
 ## 3.表达式
 
@@ -78,12 +79,12 @@
 - `1<=1`
 - `1==1`
 - `1!=1`
-- `(1>1) && (1<1)`
-- `(1>1) || (1<1)`
+- `1>1 && 1<1`
+- `1>1 || 1<1`
 - `a`
 - `a = 1`
 - `a[0]`
-- `a[index/key] = xxx`
+- `a[index/key] = xxx (map中不存在，返回null)`
 - `[1,2,3]`
 - `{a:1, b:2,true:1, false:2, 1:1, 2:2, "abc":12}`
 - `fn(...){...}`
@@ -142,10 +143,11 @@
 - `GetFree`
 - `GetBuiltin`
 - `Closure_`
+- `CurClosure`
 - `Dup`
 - `Return`
 - `XReturn`
 
 ## 7.二进制格式
 
-**sign: fallscript**
+**sign: fallscript0.0.1**

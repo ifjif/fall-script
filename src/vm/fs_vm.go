@@ -2,7 +2,7 @@ package vm
 
 import (
 	"zzc/fall-script/src/builtin"
-	"zzc/fall-script/src/compiler"
+	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/vm/rt"
 )
@@ -18,11 +18,11 @@ type FsVM struct {
 	mainThread *rt.Thread
 }
 
-func NewFsVM(c *compiler.Compiler) *FsVM {
-	locals := c.SymbolTable.MaxNum()
-	insts := c.CurrentInstructions()
-	consts := c.CurrentConstant()
-	stackDepth := c.CurrentStackDepth()
+func NewFsVM(cf *object.CompiledFunction) *FsVM {
+	locals := cf.LocalsNum
+	insts := cf.Instructions
+	consts := cf.Constants
+	stackDepth := cf.StackDepth
 	globals := make([]object.Object, GLOBAL_SIZE)
 
 	compileFn := &object.CompiledFunction{
@@ -40,7 +40,7 @@ func NewFsVM(c *compiler.Compiler) *FsVM {
 
 	fv := &FsVM{
 		globals:  globals,
-		builtins: c.Builtins,
+		builtins: vmb.Builtins,
 	}
 
 	mainThread := fv.NewThread()

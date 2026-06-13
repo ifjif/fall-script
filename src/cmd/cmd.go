@@ -15,6 +15,7 @@ import (
 type Cmd struct {
 	File   string
 	Engine string
+	Dump   bool
 }
 
 func (c *Cmd) Execute() {
@@ -58,7 +59,22 @@ func (c *Cmd) Interprete() {
 
 	comp := compiler.NewCompiler(program)
 	comp.Compile()
-	fsVM := vm.NewFsVM(comp)
 
-	fsVM.Run()
+	if c.Dump {
+		data := comp.Dump()
+		fmt.Println("DUMP-------------------------------------------")
+		fmt.Printf("%v\n", data)
+		outName := c.File + "o"
+		os.WriteFile(outName, data, 0o644)
+		fmt.Println("UNDUMP-------------------------------------------")
+		cf := comp.Undump(data)
+		fmt.Printf("%+v\n", cf)
+
+		fsVM := vm.NewFsVM(cf)
+		fsVM.Run()
+	} else {
+		fsVM := vm.NewFsVM(comp.MainFn())
+
+		fsVM.Run()
+	}
 }

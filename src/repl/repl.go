@@ -63,7 +63,7 @@ func ReplVM() {
 		//	fmt.Println(c.CurrentInstructions())
 		//	consts := c.CurrentConstant()
 		//	printFn(consts)
-		fsVM := vm.NewFsVM(c)
+		fsVM := vm.NewFsVM(c.MainFn())
 		fsVM.Run()
 	}
 }

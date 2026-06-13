@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "zzc/fall-script/src/ast"
-	"zzc/fall-script/src/builtin"
+	binarychunck "zzc/fall-script/src/binary_chunck"
 	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/code"
 	. "zzc/fall-script/src/code"
@@ -14,7 +14,6 @@ import (
 
 type Compiler struct {
 	SymbolTable *SymbolTable
-	Builtins    []*builtin.BuiltinDef
 	program     Node
 	curNode     Node
 	errors      []string
@@ -35,12 +34,33 @@ func NewCompiler(program Node) *Compiler {
 		SymbolTable: st,
 		scopes:      []*Scope{mainScope},
 		scopeIndex:  0,
-		Builtins:    vmb.Builtins,
 	}
 }
 
 func (c *Compiler) Compile() {
 	c.doCompile(c.program)
+}
+
+func (c *Compiler) MainFn() *object.CompiledFunction {
+	cf := &object.CompiledFunction{
+		StackDepth:   c.currentScope().MaxStackDepth,
+		LocalsNum:    c.SymbolTable.maxNum,
+		Constants:    c.CurrentConstant(),
+		Instructions: c.CurrentInstructions(),
+	}
+
+	return cf
+}
+
+func (c *Compiler) Dump() []byte {
+	cf := c.MainFn()
+	data := binarychunck.Dump(cf)
+
+	return data
+}
+
+func (c *Compiler) Undump(data []byte) *object.CompiledFunction {
+	return binarychunck.Undump(data)
 }
 
 func (c *Compiler) doCompile(node Node) {
