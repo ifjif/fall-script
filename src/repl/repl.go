@@ -8,6 +8,7 @@ import (
 
 	"zzc/fall-script/src/compiler"
 	"zzc/fall-script/src/evaluator"
+	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/parser"
 	"zzc/fall-script/src/vm"
@@ -33,7 +34,21 @@ func Repl() {
 		}
 		// fmt.Println(program.String())
 
-		eval := evaluator.NewEvaluator(program, env)
+		macroEnv := object.NewEnvironment()
+		macro.DefineMacros(program, macroEnv)
+		fmt.Println("删除宏后的AST:-------------")
+		fmt.Println(program.String())
+		fmt.Println("-------------")
+		fmt.Println("宏函数:-------------")
+		fmt.Println(macroEnv.Inspect())
+
+		nProgram := macro.ExpandMacros(program, macroEnv)
+		fmt.Println("-------------")
+		fmt.Println("宏展开后的AST:-------------")
+		fmt.Println(nProgram.String())
+		fmt.Println("-------------")
+
+		eval := evaluator.NewEvaluator(nProgram, env)
 		obj := eval.Evaluate()
 		if obj != nil {
 			fmt.Println(obj.Inspect())

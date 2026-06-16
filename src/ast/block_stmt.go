@@ -22,6 +22,13 @@ func (be *BlockStmt) TokenValue() string {
 	return be.Token.Value
 }
 
+func (be *BlockStmt) SetAttributes([]*AttributeExpr) {
+}
+
+func (be *BlockStmt) GetAttributes() []*AttributeExpr {
+	return nil
+}
+
 func (be *BlockStmt) String() string {
 	var buf bytes.Buffer
 

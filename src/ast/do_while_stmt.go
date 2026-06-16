@@ -22,6 +22,13 @@ func (dws *DoWhileStmt) GetToken() token.Token {
 	return dws.Token
 }
 
+func (dws *DoWhileStmt) SetAttributes(attrs []*AttributeExpr) {
+}
+
+func (dws *DoWhileStmt) GetAttributes() []*AttributeExpr {
+	return nil
+}
+
 func (dws *DoWhileStmt) String() string {
 	var buf bytes.Buffer
 

@@ -52,7 +52,7 @@ func writeConstant(buf *bytes.Buffer, con object.Object) {
 		binary.Write(buf, binary.BigEndian, con.Value)
 	case *object.String:
 		length := len(con.Value)
-		buf.WriteByte(Str)
+		buf.WriteByte(STR)
 		binary.Write(buf, binary.BigEndian, uint32(length))
 		buf.WriteString(con.Value)
 	case *object.CompiledFunction:

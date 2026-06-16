@@ -11,6 +11,8 @@ type Node interface {
 type StmtNode interface {
 	Node
 	StmtNode()
+	SetAttributes([]*AttributeExpr)
+	GetAttributes() []*AttributeExpr
 }
 
 type ExprNode interface {

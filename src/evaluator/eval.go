@@ -7,10 +7,13 @@ import (
 	. "zzc/fall-script/src/object"
 )
 
+type EvalFn func(*Evaluator, Node) object.Object
+
 type Evaluator struct {
 	program Node
 	curNode Node
 	env     *Environment
+	evalFn  map[string]EvalFn // 编译期函数
 }
 
 func NewEvaluator(program Node, env *Environment) *Evaluator {
@@ -18,8 +21,32 @@ func NewEvaluator(program Node, env *Environment) *Evaluator {
 	return e
 }
 
+func (e *Evaluator) SetEnv(env *Environment) {
+	e.env = env
+}
+
+func (e *Evaluator) GetEnv() *Environment {
+	return e.env
+}
+
+func (e *Evaluator) EnterScope() {
+	e.env = object.NewEnclosedEnvironment(e.env)
+}
+
+func (e *Evaluator) LeaveScope() {
+	e.env = e.env.Outer()
+}
+
+func (e *Evaluator) SetEvalFn(evalfn map[string]EvalFn) {
+	e.evalFn = evalfn
+}
+
 func (e *Evaluator) Evaluate() Object {
 	return e.eval(e.program)
+}
+
+func (e *Evaluator) Eval(node Node) Object {
+	return e.eval(node)
 }
 
 func (e *Evaluator) eval(node Node) Object {
@@ -114,9 +141,7 @@ func (e *Evaluator) evalLetStmt(stmt *LetStmt) Object {
 }
 
 func (e *Evaluator) evalForStmt(stmt *ForStmt) Object {
-	curEnv := e.env
-	forEnv := NewEnclosedEnvironment(curEnv)
-	e.env = forEnv
+	e.EnterScope()
 
 	if stmt.Start != nil {
 		result := e.eval(stmt.Start)
@@ -133,14 +158,14 @@ func (e *Evaluator) evalForStmt(stmt *ForStmt) Object {
 	}
 
 	for loop {
-		e.env = NewEnclosedEnvironment(forEnv)
+		e.EnterScope()
 		result := e.evalBlockStmt(stmt.Body)
 		switch result.(type) {
 		case *ErrorObj, *Ret:
 			return result
 		}
 
-		e.env = forEnv
+		e.LeaveScope()
 		if stmt.Update != nil {
 			result := e.eval(stmt.Update)
 			if isError(result) {
@@ -155,43 +180,36 @@ func (e *Evaluator) evalForStmt(stmt *ForStmt) Object {
 		}
 	}
 
-	e.env = curEnv
+	e.LeaveScope()
 
 	return nil
 }
 
 func (e *Evaluator) evalWhileStmt(stmt *WhileStmt) Object {
-	curEnv := e.env
-
 	for objectToBool(e.eval(stmt.Condition)) {
-		newEnv := object.NewEnclosedEnvironment(curEnv)
-		e.env = newEnv
+		e.EnterScope()
 		result := e.evalBlockStmt(stmt.Body)
+		e.LeaveScope()
 
 		switch result.(type) {
 		case *ErrorObj, *Ret:
 			return result
 		}
-
-		e.env = newEnv
 	}
 
 	return nil
 }
 
 func (e *Evaluator) evalDoWhileStmt(stmt *DoWhileStmt) Object {
-	curEnv := e.env
 	for {
-		newEnv := object.NewEnclosedEnvironment(curEnv)
-		e.env = newEnv
-
+		e.EnterScope()
 		result := e.evalBlockStmt(stmt.Body)
+		e.LeaveScope()
+
 		switch result.(type) {
 		case *ErrorObj, *Ret:
 			return result
 		}
-
-		e.env = curEnv
 
 		if !objectToBool(e.eval(stmt.Condition)) {
 			return nil
@@ -375,6 +393,8 @@ func (e *Evaluator) evalIndexExpr(node *IndexExpr) Object {
 		return e.calculateArrayIndexExpression(leftObj, indexObj)
 	case leftObj.Type() == HASH_OBJ:
 		return e.calculateHashIndexExpression(leftObj, indexObj)
+	case leftObj.Type() == QUOTE_OBJ:
+		return e.calculateQuoteIndexExpression(leftObj, indexObj)
 	}
 
 	return e.unsupportedIndexOperationErr(leftObj, indexObj)
@@ -391,6 +411,9 @@ func (e *Evaluator) evalFnExpre(node *FnExpr) Object {
 }
 
 func (e *Evaluator) evalCallExpr(node *CallExpr) Object {
+	if evalFn, ok := e.evalFn[node.Fn.TokenValue()]; ok {
+		return evalFn(e, node.Args[0])
+	}
 	fn := e.eval(node.Fn)
 	if isError(fn) {
 		return fn

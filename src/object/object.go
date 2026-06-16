@@ -15,6 +15,8 @@ const (
 	RETURN_OBJ            = "RETURN"
 	NULL_OBJ              = "NULL"
 	ERROR_OBJ             = "ERROR"
+	MACRO_OBJ             = "MACRO"
+	QUOTE_OBJ             = "QUOTE"
 )
 
 type BuiltinFunction func(args ...Object) Object

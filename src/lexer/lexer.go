@@ -58,6 +58,8 @@ func (l *Lexer) NextToken() Token {
 		tok = NewToken(SEMICOLON, string(l.ch), l.line, l.col)
 	case ',':
 		tok = NewToken(COMMA, string(l.ch), l.line, l.col)
+	case '#':
+		tok = NewToken(SHARP, string(l.ch), l.line, l.col)
 	case '=':
 		tok = l.tokenizeEq()
 	case '<':

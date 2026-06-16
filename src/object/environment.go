@@ -1,5 +1,7 @@
 package object
 
+import "strings"
+
 type Environment struct {
 	store map[string]Object
 	outer *Environment
@@ -14,6 +16,10 @@ func NewEnclosedEnvironment(env *Environment) *Environment {
 	newEnv := NewEnvironment()
 	newEnv.outer = env
 	return newEnv
+}
+
+func (env *Environment) Outer() *Environment {
+	return env.outer
 }
 
 func (env *Environment) Get(name string) (Object, bool) {
@@ -50,4 +56,13 @@ func (env *Environment) ExitsSet(name string, val Object) bool {
 	}
 
 	return false
+}
+
+func (env *Environment) Inspect() string {
+	is := make([]string, 0)
+	for _, v := range env.store {
+		is = append(is, v.Inspect())
+	}
+
+	return strings.Join(is, "\n")
 }

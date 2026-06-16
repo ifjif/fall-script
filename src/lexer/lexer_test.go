@@ -28,6 +28,7 @@ func TestLexer(t *testing.T) {
 "123abc"
 let fn abc return true false if else
 || && | &
+#
 `,
 			[]Token{
 				{Type: PLUS, Value: "+", Line: 1, Col: 1},
@@ -69,7 +70,8 @@ let fn abc return true false if else
 				{Type: AND, Value: "&&", Line: 14, Col: 4},
 				{Type: BOR, Value: "|", Line: 14, Col: 7},
 				{Type: BAND, Value: "&", Line: 14, Col: 9},
-				{Type: EOF, Value: "", Line: 15, Col: 1},
+				{Type: SHARP, Value: "#", Line: 15, Col: 1},
+				{Type: EOF, Value: "", Line: 16, Col: 1},
 			},
 		},
 	}

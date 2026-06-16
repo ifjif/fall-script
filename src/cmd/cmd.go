@@ -7,6 +7,7 @@ import (
 
 	"zzc/fall-script/src/compiler"
 	"zzc/fall-script/src/evaluator"
+	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/parser"
 	"zzc/fall-script/src/vm"
@@ -34,12 +35,16 @@ func (c *Cmd) Execute() {
 		fmt.Println(error)
 	}
 
-	eval := evaluator.NewEvaluator(program, env)
-	eval.Evaluate()
+	macroEnv := object.NewEnvironment()
+	macro.DefineMacros(program, macroEnv)
+	np := macro.ExpandMacros(program, macroEnv)
 
-	//if obj != nil {
-	//	fmt.Println(obj.Inspect())
-	//}
+	eval := evaluator.NewEvaluator(np, env)
+	result := eval.Evaluate()
+
+	if err, ok := result.(*object.ErrorObj); ok {
+		fmt.Println(err.Inspect())
+	}
 }
 
 func (c *Cmd) Interprete() {

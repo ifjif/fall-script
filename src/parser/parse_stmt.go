@@ -6,20 +6,27 @@ import (
 )
 
 func (p *Parser) parseStmt() StmtNode {
+	attrs := p.parseAttributes()
+	var stmt StmtNode
 	switch p.curType() {
 	case LET:
-		return p.parseLetStmt()
+		stmt = p.parseLetStmt()
 	case FOR:
-		return p.parseForStmt()
+		stmt = p.parseForStmt()
 	case WHILE:
-		return p.parseWhileStmt()
+		stmt = p.parseWhileStmt()
 	case DO:
-		return p.parseDoWhileStmt()
+		stmt = p.parseDoWhileStmt()
 	case RETURN:
-		return p.parseReturnStmt()
+		stmt = p.parseReturnStmt()
 	default:
-		return p.parseExprStmt()
+		stmt = p.parseExprStmt()
 	}
+
+	if stmt != nil {
+		stmt.SetAttributes(attrs)
+	}
+	return stmt
 }
 
 func (p *Parser) parseLetStmt() StmtNode {

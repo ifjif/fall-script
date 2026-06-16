@@ -31,6 +31,9 @@
 - **赋值符**
   1. `=`
 
+- **属性符**
+  1. `#`
+
 - **分隔符**
   1. `(`
   2. `)`
@@ -60,7 +63,6 @@
 - `false`
 - `true`
 - `null`
-- `macro(不支持)`
 
 ## 3.表达式
 
@@ -112,9 +114,87 @@
 - `do{...}while(xx)`
 - `return xx;`
 
+## **6.宏**
+
+    macro用来定义宏
+      - call 调用类型
+      - attr 属性类型
+    quote对AST进行包裹
+    unquote对AST进行求值，然后生成新AST
+
+    quote可以提取的AST:
+    - block    √  提取块(如function的body)
+    - params   ×  提取形参(如function的params)
+    - args     ×  提取实参(如call的args)
+    - ident    ×  提取标识符(如function的ident)
+
+    #[macro(call)]  // 调用宏，可像函数一样进行调用
+    fn infx(a,b) {
+      quote(
+        unquote(a)
+        +
+        unquote(b)
+      )
+    }
+
+    #[macro(attr)]  // 属性宏，可作用在函数定义上
+    fn log(attrs, ast) {
+      quote(
+        fn(){
+          puts("log-start")
+          let arr = unquote(attrs)
+          puts(arr[0], arr[1])
+          let result = fn(){unquote(ast["block"])}()
+          puts("log-end")
+          return result
+        }
+      )
+    }
+
+    #[macro(attr)]
+    fn trace(attrs, ast) {
+      quote(
+        fn(){
+          puts("trace start")
+          let arr = unquote(attrs)
+          puts(arr)
+          let result = fn(){ unquote(ast["block"]) }()
+          puts("trace end")
+          return result
+        }
+      )
+    }
+
+    // 链式传递，前一个宏的输出作为下一个宏的输入
+    #[log("log-Get", "log/login")]
+    #[trace("trace-Post", "trace/leave")]
+    fn router(a, b) {
+      puts("router function")
+      puts(a + b)
+      return "router-result"
+    }
+
+    puts(infx(1+1, 2+2))
+    let result = router(1,2)
+    puts("result= ", result)
+
+    结果:
+      6
+      trace start
+      [trace-Post, trace/leave]
+      log-start
+      log-Get
+      log/login
+      router function
+      3
+      log-end
+      trace end
+      result=
+      router-result
+
 ## 6.操作码
 
-- `Nop`
+- `Nop(u8:0)`
 - `Null_`
 - `Const`
 - `Pop`
@@ -148,6 +228,23 @@
 - `Return`
 - `XReturn`
 
-## 7.二进制格式
+## 7.二进制格式(大端序)
 
-**sign: fallscript0.0.1**
+`header{
+  SIGNATURE = "fallscript"
+  MAJOR     = (u8)0
+  MINOR     = (u8)1
+  PATCH     = (u8)0
+}
+compiled_function {
+  MaxStackDepth   (u8)
+  LocalVarNum     (u8)
+  constant-num    (u32)
+  Constants{
+    i64:                type-tag(u8):I64(1)               (i64)value
+    string:             type-tag(u8):STR(2) length(u32)        value
+    compiled_function:  type-tag(u8):CF(3)                     value
+  }
+  instruction-length (u32)
+  Instructions
+}`

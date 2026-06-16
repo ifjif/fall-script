@@ -76,7 +76,7 @@ func readConstants(r *Reader) []object.Object {
 	num := int(r.readUint32())
 	consts := make([]object.Object, num)
 
-	for i := 0; i < num; i++ {
+	for i := range consts {
 		consts[i] = readConstant(r)
 	}
 
@@ -90,7 +90,7 @@ func readConstant(r *Reader) object.Object {
 	case I64:
 		v := r.readUint64()
 		return &object.Integer{Value: int64(v)}
-	case Str:
+	case STR:
 		num := int(r.readUint32())
 		str := r.readBytes(num)
 		return &object.String{Value: string(str)}

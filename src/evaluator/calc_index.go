@@ -31,3 +31,9 @@ func (e *Evaluator) calculateHashIndexExpression(left, index Object) Object {
 
 	return pair.Value
 }
+
+func (e *Evaluator) calculateQuoteIndexExpression(left, index Object) Object {
+	quoteObj := left.(*Quote)
+
+	return quoteObj.Extract(index)
+}

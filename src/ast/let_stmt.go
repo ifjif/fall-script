@@ -22,6 +22,13 @@ func (ls *LetStmt) GetToken() token.Token {
 	return ls.Token
 }
 
+func (ls *LetStmt) SetAttributes(attrs []*AttributeExpr) {
+}
+
+func (ls *LetStmt) GetAttributes() []*AttributeExpr {
+	return nil
+}
+
 func (ls *LetStmt) String() string {
 	var buf bytes.Buffer
 

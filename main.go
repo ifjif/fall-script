@@ -20,7 +20,10 @@ func main() {
 			cmd.Interprete()
 		}
 	} else {
-		// repl.Repl()
-		repl.ReplVM()
+		if cmd.Engine == "eval" {
+			repl.Repl()
+		} else {
+			repl.ReplVM()
+		}
 	}
 }

@@ -126,6 +126,7 @@ func (p *Parser) parseFnExpr() ExprNode {
 		p.nextToken()
 		ident := p.parseIdentExpr().(*IdentExpr)
 		expr.Name = ident.Value
+		expr.Ident = ident
 	} else {
 		expr.UnName = true
 	}

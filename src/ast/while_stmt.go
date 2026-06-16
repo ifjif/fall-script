@@ -22,6 +22,13 @@ func (ws *WhileStmt) GetToken() token.Token {
 	return ws.Token
 }
 
+func (ws *WhileStmt) SetAttributes(attrs []*AttributeExpr) {
+}
+
+func (ws *WhileStmt) GetAttributes() []*AttributeExpr {
+	return nil
+}
+
 func (ws *WhileStmt) String() string {
 	var buf bytes.Buffer
 

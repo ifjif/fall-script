@@ -31,6 +31,7 @@ const (
 	LBRACE    = "{"
 	RBRACE    = "}"
 	COMMA     = ","
+	SHARP     = "#"
 
 	NULL     = "NULL"
 	INT      = "INT"
@@ -46,7 +47,6 @@ const (
 	FOR      = "FOR"
 	WHILE    = "WHILE"
 	DO       = "DO"
-	MACRO    = "MACRO"
 )
 
 var keyword = map[string]TokenType{
@@ -60,7 +60,6 @@ var keyword = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,
-	"macro":  MACRO,
 	"null":   NULL,
 }
 

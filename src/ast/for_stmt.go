@@ -42,6 +42,13 @@ func (fs *ForStmt) GetToken() token.Token {
 	return fs.Token
 }
 
+func (fs *ForStmt) SetAttributes(attrs []*AttributeExpr) {
+}
+
+func (fs *ForStmt) GetAttributes() []*AttributeExpr {
+	return nil
+}
+
 func (fs *ForStmt) String() string {
 	var buf bytes.Buffer
 

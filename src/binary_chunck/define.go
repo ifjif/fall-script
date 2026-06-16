@@ -34,6 +34,6 @@ type TypeTag byte
 const (
 	_   byte = iota
 	I64      = iota
-	Str      = iota
+	STR      = iota
 	CF       = iota
 )

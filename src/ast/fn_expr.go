@@ -10,9 +10,11 @@ import (
 type FnExpr struct {
 	Token  token.Token
 	Name   string
+	Ident  *IdentExpr
 	Params []*IdentExpr
 	Body   *BlockStmt
 	UnName bool
+	Attrs  []*AttributeExpr
 }
 
 func (fe *FnExpr) ExprNode() {}
@@ -27,6 +29,15 @@ func (fe *FnExpr) TokenValue() string {
 
 func (fe *FnExpr) String() string {
 	var buf bytes.Buffer
+
+	if len(fe.Attrs) > 0 {
+		attrs := make([]string, len(fe.Attrs))
+		for i, attr := range fe.Attrs {
+			attrs[i] = attr.String()
+		}
+		buf.WriteString(strings.Join(attrs, "\n"))
+		buf.WriteString("\n")
+	}
 
 	buf.WriteString("fn ")
 	buf.WriteString(fe.Name)

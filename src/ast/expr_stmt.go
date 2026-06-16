@@ -20,3 +20,20 @@ func (es *ExprStmt) TokenValue() string {
 func (es *ExprStmt) String() string {
 	return es.Expr.String() + ";"
 }
+
+func (es *ExprStmt) SetAttributes(attrs []*AttributeExpr) {
+	fn, ok := es.Expr.(*FnExpr)
+	if !ok {
+		return
+	}
+	fn.Attrs = attrs
+}
+
+func (es *ExprStmt) GetAttributes() []*AttributeExpr {
+	fn, ok := es.Expr.(*FnExpr)
+	if !ok {
+		return nil
+	}
+
+	return fn.Attrs
+}
