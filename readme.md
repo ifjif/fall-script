@@ -230,21 +230,21 @@
 
 ## 7.二进制格式(大端序)
 
-`header{
-  SIGNATURE = "fallscript"
-  MAJOR     = (u8)0
-  MINOR     = (u8)1
-  PATCH     = (u8)0
-}
-compiled_function {
-  MaxStackDepth   (u8)
-  LocalVarNum     (u8)
-  constant-num    (u32)
-  Constants{
-    i64:                type-tag(u8):I64(1)               (i64)value
-    string:             type-tag(u8):STR(2) length(u32)        value
-    compiled_function:  type-tag(u8):CF(3)                     value
-  }
-  instruction-length (u32)
-  Instructions
-}`
+    header{
+      SIGNATURE = "fallscript"
+      MAJOR     = (u8)0
+      MINOR     = (u8)1
+      PATCH     = (u8)0
+    }
+    compiled_function {
+      MaxStackDepth   (u8)
+      LocalVarNum     (u8)
+      constant-num    (u32)
+      Constants{
+        i64:                type-tag(u8):I64(1)               (i64)value
+        string:             type-tag(u8):STR(2) length(u32)        value
+        compiled_function:  type-tag(u8):CF(3)                     value
+      }
+      instruction-length (u32)
+      Instructions
+    }
