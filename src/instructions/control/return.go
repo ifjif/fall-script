@@ -11,12 +11,23 @@ type Return struct {
 }
 
 func (r *Return) Execute(frame *rt.Frame) {
+	curModule := frame.Closure().OwnerModule
 	lower := frame.PrevFrame()
+	var prevModule *object.CompiledModule
+
 	if lower != nil {
-		lower.PushStack(object.NULL)
+		prevModule = lower.Closure().OwnerModule
+		if curModule == prevModule {
+			lower.PushStack(object.NULL)
+		}
 	}
 	thread := frame.Thread()
 	thread.PopFrame()
+
+	// 模块结束
+	if curModule != prevModule {
+		curModule.Status = object.Initialized
+	}
 }
 
 type XReturn struct {

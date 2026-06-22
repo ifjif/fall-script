@@ -79,6 +79,11 @@ func (c *Compiler) addConstant(o object.Object) int {
 	return len(scope.Constants) - 1
 }
 
+func (c *Compiler) addStrConstant(str string) int {
+	strObj := &object.String{Value: str}
+	return c.addConstant(strObj)
+}
+
 func (c *Compiler) currentScope() *Scope {
 	return c.scopes[c.scopeIndex]
 }

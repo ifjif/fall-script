@@ -25,8 +25,9 @@ func (c *Closure) Execute(frame *rt.Frame) {
 	}
 	frees := frame.PopStacks(c.freeNum)
 	closure := &object.Closure{
-		Fn:   cf,
-		Free: frees,
+		Fn:          cf,
+		Free:        frees,
+		OwnerModule: frame.Closure().OwnerModule,
 	}
 
 	frame.PushStack(closure)

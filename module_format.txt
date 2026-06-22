@@ -1,0 +1,55 @@
+name: mod1.fs
+  globals       : 5
+  imports:
+    0000 from: 0 imported: 1 local: 1
+  exports:
+    0000 name: 2 globalId: 3
+  locals        : 0
+  params        : 0
+  stack depth   : 2
+  constants:
+    0000: STRING
+          ./mod2.fs
+    0001: STRING
+          b
+    0002: STRING
+          d
+    0003: INTEGER
+          1
+    0004: INTEGER
+          1
+    0005: COMPILED_FUNCTION
+          locals        : 0
+          params        : 0
+          stack depth   : 2
+          constants:
+            0000: INTEGER
+                  2
+            0001: INTEGER
+                  2
+          instructions:
+            0000 const 0
+            0003 const 1
+            0006 add
+            0007 xreturn
+
+  instructions:
+    0000 const 3
+    0003 set_global 1
+    0006 get_global 1
+    0009 get_global 0
+    0012 add
+    0013 set_global 2
+    0016 const 4
+    0019 set_global 3
+    0022 closure 5 0
+    0026 dup
+    0027 set_global 4
+    0030 pop
+    0031 get_builtin 0
+    0033 get_global 2
+    0036 call 1
+    0039 pop
+    0040 get_global 3
+    0043 pop
+    0044 return

@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	. "zzc/fall-script/src/ast"
-	binarychunck "zzc/fall-script/src/binary_chunck"
-	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/code"
 	. "zzc/fall-script/src/code"
 	"zzc/fall-script/src/object"
@@ -19,26 +17,53 @@ type Compiler struct {
 	errors      []string
 	scopes      []*Scope
 	scopeIndex  int
+	imports     []*object.ImportRef
+	exports     []*object.ExportRef
+	exportNames []string
 }
 
-func NewCompiler(program Node) *Compiler {
-	st := NewSymbolTable()
+func NewCompiler(program Node, imports []*ImportStmt, exports []*ExportStmt, pst *SymbolTable) *Compiler {
+	st := NewEnclosedSymbolTable(pst)
 	mainScope := NewScope()
 
-	for i, fn := range vmb.Builtins {
-		st.defineBuiltin(i, fn.Name)
-	}
-
-	return &Compiler{
+	c := &Compiler{
 		program:     program,
 		SymbolTable: st,
 		scopes:      []*Scope{mainScope},
 		scopeIndex:  0,
 	}
+	// 定义 import
+	c.defineImports(imports)
+
+	// 定义exports
+	c.defineExports(exports)
+
+	return c
+}
+
+func (c *Compiler) defineExport(name string) *object.ExportRef {
+	idx := c.addStrConstant(name)
+	exp := &object.ExportRef{Name: idx, GlobalId: -1}
+	return exp
 }
 
 func (c *Compiler) Compile() {
 	c.doCompile(c.program)
+	// 完善exports
+	c.resolveExports()
+}
+
+func (c *Compiler) MainModule() *object.Module {
+	cf := c.MainFn()
+	mo := &object.Module{
+		Name:      "",
+		Imports:   c.imports,
+		Exports:   c.exports,
+		Cf:        cf,
+		GlobalNum: c.SymbolTable.GlobalNum(),
+	}
+
+	return mo
 }
 
 func (c *Compiler) MainFn() *object.CompiledFunction {
@@ -50,17 +75,6 @@ func (c *Compiler) MainFn() *object.CompiledFunction {
 	}
 
 	return cf
-}
-
-func (c *Compiler) Dump() []byte {
-	cf := c.MainFn()
-	data := binarychunck.Dump(cf)
-
-	return data
-}
-
-func (c *Compiler) Undump(data []byte) *object.CompiledFunction {
-	return binarychunck.Undump(data)
 }
 
 func (c *Compiler) doCompile(node Node) {

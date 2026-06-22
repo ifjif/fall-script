@@ -76,11 +76,11 @@ func (f *Frame) GetFree(idx int) object.Object {
 }
 
 func (f *Frame) GetGlobal(idx int) object.Object {
-	return f.Thread().GetGlobal(idx)
+	return f.closure.GetGlobal(idx)
 }
 
 func (f *Frame) SetGlobal(idx int, value object.Object) {
-	f.Thread().SetGlobal(idx, value)
+	f.closure.SetGlobal(idx, value)
 }
 
 func (f *Frame) GetBuiltin(idx int) object.Object {

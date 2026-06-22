@@ -5,6 +5,25 @@ import (
 	"zzc/fall-script/src/object"
 )
 
+/*
+* 处理imports
+* 根据 imports中信息，先去目标exports找
+* 如果是标识符，先从ast中找，没有找到，再从imports中找，如果都没有，报错
+*
+*
+ */
+//func resolveImports(imports []*object.ImportRef) {
+//	for _, imp := range imports {
+//		// 加载源
+//		// source := imp.From
+//		//	for _, exp := range exports {
+//		//		// 非标识符和标识符进行拆分
+//		//	}
+//		// 在ast中找标识符的节点
+//		// 还有剩余的，从imports中找
+//	}
+//}
+
 func DefineMacros(program *ast.Program, env *object.Environment) {
 	defines := []int{}
 

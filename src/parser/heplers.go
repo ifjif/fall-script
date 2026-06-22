@@ -1,6 +1,8 @@
 package parser
 
-import . "zzc/fall-script/src/token"
+import (
+	. "zzc/fall-script/src/token"
+)
 
 func (p *Parser) curType() TokenType {
 	return p.curToken.Type
@@ -12,6 +14,17 @@ func (p *Parser) nexType() TokenType {
 
 func (p *Parser) curTypeIs(t TokenType) bool {
 	return p.curType() == t
+}
+
+func (p *Parser) expectCurIdent(v string) bool {
+	if p.curToken.Value == v {
+		return true
+	}
+
+	expected := Token{Type: IDENT, Value: v}
+	p.expectedIdentifierErr(expected)
+
+	return false
 }
 
 func (p *Parser) expectCur(tt TokenType) bool {

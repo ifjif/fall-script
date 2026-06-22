@@ -17,6 +17,11 @@ const (
 	ERROR_OBJ             = "ERROR"
 	MACRO_OBJ             = "MACRO"
 	QUOTE_OBJ             = "QUOTE"
+	MODULE_OBJ            = "MODULE"
+	COMPILED_MODULE_OBJ   = "COMPILED_MODULE"
+	IMPORT_REF_OBJ        = "IMPORT_REF"
+	EXPORT_REF_OBJ        = "EXPORT_REF"
+	GLOBAL_REF_OBJ        = "GLOBAL_REF"
 )
 
 type BuiltinFunction func(args ...Object) Object

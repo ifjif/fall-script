@@ -7,17 +7,19 @@ import (
 
 type Thread struct {
 	builtins []*builtin.BuiltinDef
-	global   []object.Object
 	stack    *Stack
 	pc       int
 }
 
-func NewThread(maxFrams int, global []object.Object, builtins []*builtin.BuiltinDef) *Thread {
+func NewThread(maxFrams int, builtins []*builtin.BuiltinDef) *Thread {
 	return &Thread{
 		stack:    NewStack(maxFrams),
-		global:   global,
 		builtins: builtins,
 	}
+}
+
+func (t *Thread) GetPc() int {
+	return t.pc
 }
 
 func (t *Thread) SetPc(pc int) {
@@ -43,14 +45,6 @@ func (t *Thread) IsEmpty() bool {
 
 func (t *Thread) CurrentFrame() *Frame {
 	return t.stack.top
-}
-
-func (t *Thread) GetGlobal(idx int) object.Object {
-	return t.global[idx]
-}
-
-func (t *Thread) SetGlobal(idx int, value object.Object) {
-	t.global[idx] = value
 }
 
 func (t *Thread) GetBuiltin(idx int) object.Object {

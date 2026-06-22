@@ -47,9 +47,13 @@ const (
 	FOR      = "FOR"
 	WHILE    = "WHILE"
 	DO       = "DO"
+	IMPORT   = "IMPORT"
+	EXPORT   = "EXPORT"
 )
 
 var keyword = map[string]TokenType{
+	"import": IMPORT,
+	"export": EXPORT,
 	"fn":     FUNCTION,
 	"let":    LET,
 	"for":    FOR,

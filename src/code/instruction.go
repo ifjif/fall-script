@@ -35,6 +35,29 @@ func (ins Instructions) String() string {
 	return buf.String()
 }
 
+func (ins Instructions) StringWithIndent(indent string) string {
+	var buf bytes.Buffer
+
+	i := 0
+
+	for i < len(ins) {
+		def, err := LookupDef(ins[i])
+		if err != nil {
+			fmt.Fprintf(&buf, "Error: %s\n", err)
+			continue
+		}
+
+		operands, length := def.ReadOperand(ins[i+1:])
+
+		fmt.Fprintf(&buf, "%s%04d %s\n", indent, i, ins.fmtInstruction(def, operands))
+
+		i += 1 + length
+
+	}
+
+	return buf.String()
+}
+
 func (ins Instructions) fmtInstruction(def *Definition, operands []int) string {
 	operandCount := len(def.OperandWidths)
 

@@ -38,6 +38,10 @@ func (st *SymbolTable) DefNum() int {
 	return st.defNum
 }
 
+func (st *SymbolTable) GlobalNum() int {
+	return st.globalNum
+}
+
 func (st *SymbolTable) MaxNum() int {
 	return st.maxNum
 }
@@ -65,7 +69,7 @@ func NewEnclosedSymbolTableForFn(outer *SymbolTable) *SymbolTable {
 func (st *SymbolTable) Define(name string) Symbol {
 	symbol := Symbol{Name: name, Pos: st.defNum}
 
-	if st.outer == nil {
+	if st.outer.outer == nil {
 		symbol.Scope = GLOBAL
 		symbol.Pos = st.globalNum
 		st.globalNum++
@@ -91,7 +95,7 @@ func (st *SymbolTable) Resolve(name string) (Symbol, bool) {
 			return sym, ok
 		}
 
-		if sym.Scope == GLOBAL || st.scope == BLOCK {
+		if sym.Scope == GLOBAL || sym.Scope == BUILTIN || st.scope == BLOCK {
 			return sym, ok
 		}
 
@@ -111,7 +115,7 @@ func (st *SymbolTable) defineFree(origin Symbol) Symbol {
 	return free
 }
 
-func (st *SymbolTable) defineBuiltin(index int, name string) Symbol {
+func (st *SymbolTable) DefineBuiltin(index int, name string) Symbol {
 	sym := Symbol{Name: name, Pos: index, Scope: BUILTIN}
 	st.store[name] = sym
 	return sym

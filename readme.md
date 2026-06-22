@@ -52,6 +52,8 @@
 
 ## 2.关键字
 
+- `import`
+- `export`
 - `fn`
 - `let`
 - `for`
@@ -108,6 +110,9 @@
 
 ## 5.语句
 
+- `import {xx, xxx as aa} from "xx"`
+- `import * as xx from "xx"`
+- `export xxx`
 - `let a = 表达式;`
 - `for(xx;xx;xx){...}`
 - `while(xx){...}`
@@ -236,15 +241,31 @@
       MINOR     = (u8)1
       PATCH     = (u8)0
     }
+    module_meta{
+      name_length     (u32)
+      name string
+      global_num      (u16)
+      imports_num     (u16)
+      imports {
+        from          (u16)
+        imported      (u16)
+        local         (u16)
+      }
+      exports_num     (u16)
+      exports {
+        name          (u16)
+        global_idx    (u16)
+      }
+    }
     compiled_function {
       MaxStackDepth   (u8)
       LocalVarNum     (u8)
-      constant-num    (u32)
+      constant_num    (u16)
       Constants{
         i64:                type-tag(u8):I64(1)               (i64)value
         string:             type-tag(u8):STR(2) length(u32)        value
         compiled_function:  type-tag(u8):CF(3)                     value
       }
-      instruction-length (u32)
+      instruction_length (u32)
       Instructions
     }

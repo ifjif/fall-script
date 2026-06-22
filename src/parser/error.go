@@ -28,8 +28,9 @@ func (p *Parser) intParseErr(token Token) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) expectedIdentifierErr(token Token) {
-	msg := p.parseErr(ASSIGN, token)
+func (p *Parser) expectedIdentifierErr(expected Token) {
+	cur := p.curToken
+	msg := fmt.Sprintf("Error: Expected '%s' token, value is '%s', got '%s token', value is '%s' at line %d, column %d", expected.Type, expected.Value, cur.Type, cur.Value, cur.Line, cur.Col)
 	p.errors = append(p.errors, msg)
 }
 

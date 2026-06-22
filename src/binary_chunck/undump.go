@@ -17,6 +17,12 @@ func (r *Reader) readUint8() uint8 {
 	return d
 }
 
+func (r *Reader) readUint16() uint16 {
+	d := binary.BigEndian.Uint16(r.data)
+	r.data = r.data[2:]
+	return d
+}
+
 func (r *Reader) readUint32() uint32 {
 	d := binary.BigEndian.Uint32(r.data)
 	r.data = r.data[4:]
@@ -35,11 +41,11 @@ func (r *Reader) readBytes(num int) []byte {
 	return b
 }
 
-func Undump(data []byte) *object.CompiledFunction {
+func Undump(data []byte) *object.Module {
 	reader := &Reader{data: data}
 	readHeader(reader)
-	cf := readFunction(reader)
-	return cf
+	mo := readModule(reader)
+	return mo
 }
 
 func readHeader(r *Reader) {
@@ -51,6 +57,65 @@ func readHeader(r *Reader) {
 	fmt.Println(minor)
 	patch := r.readUint8()
 	fmt.Println(patch)
+}
+
+func readModule(r *Reader) *object.Module {
+	mo := &object.Module{}
+	mo.Name = readModuleName(r)
+	mo.GlobalNum = readModuleGlobalNum(r)
+	mo.Imports = readModuleImports(r)
+	mo.Exports = readModuleExports(r)
+	mo.Cf = readFunction(r)
+
+	return mo
+}
+
+func readModuleName(r *Reader) string {
+	length := r.readUint32()
+	name := r.readBytes(int(length))
+	return string(name)
+}
+
+func readModuleGlobalNum(r *Reader) int {
+	n := r.readUint16()
+	return int(n)
+}
+
+func readModuleImports(r *Reader) []*object.ImportRef {
+	num := int(r.readUint16())
+	imports := make([]*object.ImportRef, num)
+	for i := range num {
+		imp := readModuleImport(r)
+		imports[i] = imp
+	}
+
+	return imports
+}
+
+func readModuleImport(r *Reader) *object.ImportRef {
+	imp := &object.ImportRef{}
+	imp.From = int(r.readUint16())
+	imp.Imported = int(r.readUint16())
+	imp.Local = int(r.readUint16())
+	return imp
+}
+
+func readModuleExports(r *Reader) []*object.ExportRef {
+	num := int(r.readUint16())
+	exports := make([]*object.ExportRef, num)
+	for i := range num {
+		exp := readModuleExport(r)
+		exports[i] = exp
+	}
+
+	return exports
+}
+
+func readModuleExport(r *Reader) *object.ExportRef {
+	exp := &object.ExportRef{}
+	exp.Name = int(r.readUint16())
+	exp.GlobalId = int(r.readUint16())
+	return exp
 }
 
 func readFunction(r *Reader) *object.CompiledFunction {
@@ -73,7 +138,7 @@ func readLocalVarNum(r *Reader) int {
 }
 
 func readConstants(r *Reader) []object.Object {
-	num := int(r.readUint32())
+	num := int(r.readUint16())
 	consts := make([]object.Object, num)
 
 	for i := range consts {

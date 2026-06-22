@@ -2,6 +2,7 @@ package parser
 
 import (
 	. "zzc/fall-script/src/ast"
+	"zzc/fall-script/src/token"
 	. "zzc/fall-script/src/token"
 )
 
@@ -9,6 +10,10 @@ func (p *Parser) parseStmt() StmtNode {
 	attrs := p.parseAttributes()
 	var stmt StmtNode
 	switch p.curType() {
+	case IMPORT:
+		stmt = p.parseImportStmt()
+	case EXPORT:
+		stmt = p.parseExportStmt()
 	case LET:
 		stmt = p.parseLetStmt()
 	case FOR:
@@ -26,6 +31,33 @@ func (p *Parser) parseStmt() StmtNode {
 	if stmt != nil {
 		stmt.SetAttributes(attrs)
 	}
+	return stmt
+}
+
+func (p *Parser) parseImportStmt() StmtNode {
+	stmt := &ImportStmt{Token: p.curToken}
+	specifiers := p.parseSpecifiers()
+	source := p.parseSource()
+	if specifiers == nil || source == "" {
+		return nil
+	}
+	stmt.Specifiers = specifiers
+	stmt.Source = source
+
+	if p.peekTypeIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExportStmt() StmtNode {
+	stmt := &ExportStmt{Token: p.curToken}
+	declaration := p.parseDeclaration()
+	if declaration == nil {
+		return nil
+	}
+	stmt.Declaration = declaration
 	return stmt
 }
 
