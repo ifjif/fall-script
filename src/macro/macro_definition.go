@@ -1,35 +1,22 @@
 package macro
 
 import (
+	"fmt"
+	"sort"
+
 	"zzc/fall-script/src/ast"
 	"zzc/fall-script/src/object"
 )
 
-/*
-* 处理imports
-* 根据 imports中信息，先去目标exports找
-* 如果是标识符，先从ast中找，没有找到，再从imports中找，如果都没有，报错
-*
-*
- */
-//func resolveImports(imports []*object.ImportRef) {
-//	for _, imp := range imports {
-//		// 加载源
-//		// source := imp.From
-//		//	for _, exp := range exports {
-//		//		// 非标识符和标识符进行拆分
-//		//	}
-//		// 在ast中找标识符的节点
-//		// 还有剩余的，从imports中找
-//	}
-//}
-
+// import宏，export宏，都需要从import和export中删除
 func DefineMacros(program *ast.Program, env *object.Environment) {
+	// 从import中找,然后删除
+	// 从export中找，然后删除
 	defines := []int{}
 
 	for i, stmt := range program.Stmts {
-		if ok, attr := isMacroDefinition(stmt); ok {
-			addMacro(stmt, attr, env)
+		if ok, attr := IsMacroDefinition(stmt); ok {
+			AddMacro(stmt, attr, env)
 			defines = append(defines, i)
 		}
 	}
@@ -37,13 +24,19 @@ func DefineMacros(program *ast.Program, env *object.Environment) {
 	deleteMacroDefinition(defines, program)
 }
 
-func isMacroDefinition(stmt ast.StmtNode) (bool, *ast.AttributeExpr) {
+func IsMacroDefinition(stmt ast.Node) (bool, *ast.AttributeExpr) {
 	exprStmt, ok := stmt.(*ast.ExprStmt)
+	var expr ast.ExprNode
 	if !ok {
-		return false, nil
+		expr, ok = stmt.(ast.ExprNode)
+		if !ok {
+			return false, nil
+		}
+	} else {
+		expr = exprStmt.Expr
 	}
 
-	fn, ok := exprStmt.Expr.(*ast.FnExpr)
+	fn, ok := expr.(*ast.FnExpr)
 	if !ok {
 		return false, nil
 	}
@@ -57,8 +50,14 @@ func isMacroDefinition(stmt ast.StmtNode) (bool, *ast.AttributeExpr) {
 	return false, nil
 }
 
-func addMacro(stmt ast.StmtNode, attr *ast.AttributeExpr, env *object.Environment) {
-	fn := stmt.(*ast.ExprStmt).Expr.(*ast.FnExpr)
+func AddMacro(stmt ast.Node, attr *ast.AttributeExpr, env *object.Environment) {
+	var expr ast.Node
+	if es, ok := stmt.(*ast.ExprStmt); ok {
+		expr = es.Expr
+	} else {
+		expr = stmt
+	}
+	fn := expr.(*ast.FnExpr)
 
 	macro := &object.Macro{
 		Name:   fn.Name,
@@ -76,4 +75,40 @@ func deleteMacroDefinition(defines []int, program *ast.Program) {
 		idx := defines[i]
 		program.Stmts = append(program.Stmts[:idx], program.Stmts[idx+1:]...)
 	}
+}
+
+func DeleteMacroFromImports(defines map[int][]int, imports []*ast.ImportStmt) []*ast.ImportStmt {
+	fmt.Println("删除 import中的 宏")
+	rootDefines := make([]int, 0)
+	for i, def := range defines {
+		DeleteMacroFromImport(def, imports[i])
+		rootDefines = append(rootDefines, i)
+	}
+
+	sort.Ints(rootDefines)
+
+	for i := len(rootDefines) - 1; i >= 0; i-- {
+		idx := rootDefines[i]
+		if len(imports[idx].Specifiers) == 0 {
+			imports = append(imports[:idx], imports[idx+1:]...)
+		}
+	}
+
+	return imports
+}
+
+func DeleteMacroFromImport(defines []int, imports *ast.ImportStmt) {
+	for i := len(defines) - 1; i >= 0; i-- {
+		idx := defines[i]
+		imports.Specifiers = append(imports.Specifiers[:idx], imports.Specifiers[idx+1:]...)
+	}
+}
+
+func DeleteMacroFromExports(defines []int, exports []*ast.ExportStmt) []*ast.ExportStmt {
+	fmt.Println("删除 export中的 宏")
+	for i := len(defines) - 1; i >= 0; i-- {
+		idx := defines[i]
+		exports = append(exports[:idx], exports[idx+1:]...)
+	}
+	return exports
 }
