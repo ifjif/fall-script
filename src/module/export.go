@@ -1,9 +1,14 @@
 package module
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"os"
 
 	"zzc/fall-script/src/ast"
+	"zzc/fall-script/src/ast/marshal"
+	"zzc/fall-script/src/macro"
 )
 
 /*
@@ -18,11 +23,22 @@ import (
 
 *
 */
+
+type ExportOrigin byte
+
+const (
+	OriginLocal ExportOrigin = iota
+	OriginReExport
+)
+
+// todo 自定义序列化 AST
 type ExportMeta struct {
 	Name      string
 	Ast       ast.Node
 	Source    string
 	ExportIdx int
+	Origin    ExportOrigin
+	Imported  string
 }
 
 func NewExportMeta(name string, ast ast.Node, source string, exportIdx int) *ExportMeta {
@@ -31,27 +47,120 @@ func NewExportMeta(name string, ast ast.Node, source string, exportIdx int) *Exp
 		Ast:       ast,
 		ExportIdx: exportIdx,
 		Source:    source,
+		Origin:    OriginLocal,
 	}
 }
 
+func (em *ExportMeta) SetReExportInfo(imported string) {
+	em.Origin = OriginReExport
+	em.Imported = imported
+}
+
 type ExportMetas map[string]*ExportMeta
+
+func (ems ExportMetas) Serialize(file string) {
+	fmt.Printf("====================序列化模块：%s\n======================", file)
+	output := ExportMetas{}
+	for name, em := range ems {
+		nem := NewExportMeta(em.Name, nil, em.Source, em.ExportIdx)
+		if em.Origin == OriginReExport {
+			fmt.Printf("重导入：%s -> %s at %s", em.Name, em.Imported, em.Source)
+			nem.SetReExportInfo(em.Imported)
+			fmt.Printf("%+v\n", nem)
+			output[name] = nem
+			continue
+		}
+
+		fn, ok := em.Ast.(*ast.FnExpr)
+		if !ok {
+			nem.Ast = em.Ast
+			output[name] = nem
+			continue
+		}
+
+		ok, _ = macro.IsMacroDefinition(fn)
+		nfn := &ast.FnExpr{
+			Token:  fn.Token,
+			Name:   fn.Name,
+			Ident:  fn.Ident,
+			Params: fn.Params,
+			UnName: fn.UnName,
+			Attrs:  fn.Attrs,
+			Body:   nil,
+		}
+		if ok {
+			nfn.Body = fn.Body
+		}
+		nem.Ast = nfn
+		output[name] = nem
+	}
+
+	fmt.Println("=================================序列化ast")
+	//	Name      string
+	//	Ast       ast.Node
+	//	Source    string
+	//	ExportIdx int
+	//	Origin    ExportOrigin
+	//	Imported  string
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.BigEndian, uint16(len(output)))
+	for _, em := range output {
+		binary.Write(&buf, binary.BigEndian, uint16(len(em.Name)))
+		buf.WriteString(em.Name)
+		binary.Write(&buf, binary.BigEndian, uint16(len(em.Source)))
+		buf.WriteString(em.Source)
+		binary.Write(&buf, binary.BigEndian, uint16(len(em.Imported)))
+		buf.WriteString(em.Imported)
+		binary.Write(&buf, binary.BigEndian, uint16(em.ExportIdx))
+		binary.Write(&buf, binary.BigEndian, uint8(em.Origin))
+		data := marshal.MarshalAst(em.Ast)
+		_, err := buf.Write(data)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+	}
+
+	fmt.Println("=================================序列化ast end")
+	os.WriteFile(file+".fsm", buf.Bytes(), 0o644)
+}
 
 type ExportMetasRegister map[string]ExportMetas
 
 /*
 * export 流程
-* 取export中 let fn 的
-* 剩下ident留存
-* 从AST中 ident的
-* 将 map[string]*Exports 进行注册
-* 将剩下的ident从从import找
-* 看源是否被注册
-* 有，取出
-* 没，解析
-* 寻找，如果没有，panic
-* 找到加入 map[string]*Export2
-*
+* 取export中 非 identifier 的 加入ExportMetas
+* 剩下的identifier
+* 	1. 从AST中找,找到加入ExportMetas
+* 	2. 还剩下，从import中找
+* 		 看源是否在 ExportMetaRegister中：
+* 		 	有，取出
+* 		 	无，解析
+*      寻找，如果没有，panic; 找到加入 ExportMetas
  */
+func resolveExports(l *Loader, file string, er ExportMetasRegister) ExportMetas {
+	exports2, ok := er[file]
+	if ok {
+		return exports2
+	}
+
+	// 从 meta 文件中加载
+	exports2, err := l.LoadMetaFile(file)
+
+	fmt.Println("===================================================加载meta")
+	if err == nil {
+		fmt.Println("===================================================来自meta")
+		er[file] = exports2
+		return exports2
+	}
+	// 从源文件中加载
+	program := l.GenerateAST(file)
+
+	imports, exports := CollectImportsAndExports(program)
+
+	return resolveExports2(l, file, program, imports, exports, er)
+}
+
 func resolveExports2(l *Loader, file string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt, er ExportMetasRegister) ExportMetas {
 	source := file
 
@@ -131,21 +240,14 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 					msg := fmt.Sprintf("no exported named %q in file %s", spe.Imported, sr)
 					panic(msg)
 				}
-				nep := NewExportMeta(ep.Name, ep.Ast, ep.Source, idx)
+				nep := NewExportMeta(spe.Local, ep.Ast, ep.Source, idx)
+				nep.SetReExportInfo(ep.Name)
 				exports2[spe.Local] = nep
 			}
 		}
 	}
 
+	exports2.Serialize(source)
+
 	return exports2
-}
-
-func resolveExports(l *Loader, file string, er ExportMetasRegister) ExportMetas {
-	// 加载源
-	source := file
-	program := l.GenerateAST(source)
-
-	imports, exports := CollectImportsAndExports(program)
-
-	return resolveExports2(l, file, program, imports, exports, er)
 }

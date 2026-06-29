@@ -1,18 +1,19 @@
 package module
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
 
 	"zzc/fall-script/src/ast"
+	"zzc/fall-script/src/ast/marshal"
 	binarychunck "zzc/fall-script/src/binary_chunck"
 	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/compiler"
 	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/parser"
-	"zzc/fall-script/src/utils"
 )
 
 type FileType byte
@@ -25,12 +26,14 @@ const (
 const (
 	SourceSuffix   = ".fs"
 	BytecodeSuffix = ".fsc"
+	MetaSuffix     = ".fsm"
 )
 
 type Loader struct {
 	rootSt         *compiler.SymbolTable
 	sourceSuffix   string
 	bytecodeSuffix string
+	metaSuffix     string
 }
 
 func NewLoader() *Loader {
@@ -39,7 +42,12 @@ func NewLoader() *Loader {
 		st.DefineBuiltin(i, fn.Name)
 	}
 
-	loader := &Loader{rootSt: st, sourceSuffix: SourceSuffix, bytecodeSuffix: BytecodeSuffix}
+	loader := &Loader{
+		rootSt:         st,
+		sourceSuffix:   SourceSuffix,
+		bytecodeSuffix: BytecodeSuffix,
+		metaSuffix:     MetaSuffix,
+	}
 	return loader
 }
 
@@ -49,6 +57,10 @@ func (l *Loader) BytecodeFilepath(file string) string {
 
 func (l *Loader) SourceFilepath(file string) string {
 	return file + l.sourceSuffix
+}
+
+func (l *Loader) MetaFilepath(file string) string {
+	return file + l.metaSuffix
 }
 
 func (l *Loader) readFile(file string) ([]byte, FileType) {
@@ -77,10 +89,17 @@ func (l *Loader) readSourceFile(file string) ([]byte, error) {
 	return data, err
 }
 
+func (l *Loader) readMetaFile(file string) ([]byte, error) {
+	nfile := l.MetaFilepath(file)
+	data, err := os.ReadFile(nfile)
+
+	return data, err
+}
+
 func (l *Loader) GenerateAST(file string) *ast.Program {
-	data, ft := l.readFile(file)
-	if ft == BYTECODE {
-		panic("expected source file, got bytecode file")
+	data, err := l.readSourceFile(file)
+	if err != nil {
+		panic(err)
 	}
 
 	return l.parse(data)
@@ -95,6 +114,51 @@ func (l *Loader) parse(data []byte) *ast.Program {
 	}
 
 	return program
+}
+
+func (l *Loader) LoadMetaFile(file string) (ExportMetas, error) {
+	data, err := l.readMetaFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	exportMetas := ExportMetas{}
+	count := binary.BigEndian.Uint16(data)
+	data = data[2:]
+
+	for range count {
+		nl := binary.BigEndian.Uint16(data)
+		data = data[2:]
+		name := string(data[:nl])
+		data = data[nl:]
+		sl := binary.BigEndian.Uint16(data)
+		data = data[2:]
+		source := string(data[:sl])
+		data = data[sl:]
+		il := binary.BigEndian.Uint16(data)
+		data = data[2:]
+		imported := string(data[:il])
+		data = data[il:]
+		exportIdx := binary.BigEndian.Uint16(data)
+		data = data[2:]
+		origin := data[0]
+		data = data[1:]
+		ast, nd := marshal.Unmarshal(data)
+		data = nd
+
+		em := &ExportMeta{
+			Name:      name,
+			Source:    source,
+			ExportIdx: int(exportIdx),
+			Imported:  imported,
+			Ast:       ast,
+			Origin:    ExportOrigin(origin),
+		}
+
+		exportMetas[name] = em
+	}
+
+	return exportMetas, nil
 }
 
 // 先 字节码 再 源码
@@ -130,7 +194,7 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	cmp.Compile()
 	module := cmp.MainModule()
 	module.Name = file
-	utils.PrintModule(module, "")
+	//	utils.PrintModule(module, "")
 	return module
 }
 
@@ -148,11 +212,11 @@ func (l *Loader) DumpFile(file string) {
 	mo := l.LoadText(input, file)
 
 	data := binarychunck.Dump(mo)
-	fmt.Println("DUMP-------------------------------------------")
-	fmt.Printf("%v\n", data)
+	// fmt.Println("DUMP-------------------------------------------")
+	// fmt.Printf("%v\n", data)
 	outName := l.BytecodeFilepath(file)
 	os.WriteFile(outName, data, 0o644)
-	fmt.Println("UNDUMP-------------------------------------------")
-	nmo := l.LoadBytecode(data)
-	utils.PrintModule(nmo, "")
+	// fmt.Println("UNDUMP-------------------------------------------")
+	l.LoadBytecode(data)
+	// utils.PrintModule(nmo, "")
 }

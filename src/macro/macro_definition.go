@@ -50,7 +50,18 @@ func IsMacroDefinition(stmt ast.Node) (bool, *ast.AttributeExpr) {
 	return false, nil
 }
 
+func AddMacroWithAlias(alias string, stmt ast.Node, attr *ast.AttributeExpr, env *object.Environment) {
+	macro := getMacro(stmt, attr, env)
+	macro.Name = alias
+	env.Set(macro.Name, macro)
+}
+
 func AddMacro(stmt ast.Node, attr *ast.AttributeExpr, env *object.Environment) {
+	macro := getMacro(stmt, attr, env)
+	env.Set(macro.Name, macro)
+}
+
+func getMacro(stmt ast.Node, attr *ast.AttributeExpr, env *object.Environment) *object.Macro {
 	var expr ast.Node
 	if es, ok := stmt.(*ast.ExprStmt); ok {
 		expr = es.Expr
@@ -67,7 +78,7 @@ func AddMacro(stmt ast.Node, attr *ast.AttributeExpr, env *object.Environment) {
 		Env:    env,
 	}
 
-	env.Set(macro.Name, macro)
+	return macro
 }
 
 func deleteMacroDefinition(defines []int, program *ast.Program) {

@@ -1,4 +1,4 @@
-name: mod1.fs
+name: mod1
   globals       : 5
   imports:
     0000 from: 0 imported: 1 local: 1
@@ -9,7 +9,7 @@ name: mod1.fs
   stack depth   : 2
   constants:
     0000: STRING
-          ./mod2.fs
+          ./mod2
     0001: STRING
           b
     0002: STRING

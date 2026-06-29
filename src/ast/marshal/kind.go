@@ -1,0 +1,30 @@
+package marshal
+
+type AstKind byte
+
+const (
+	NIL_K AstKind = iota // 空节点
+	NULL_K
+	INTEGER_k
+	BOOL_K
+	STRING_K
+	IDENT_K
+	INFIX_K
+	PREFIX_K
+	ARRAY_K
+	HASH_K
+	INDEX_K
+	CALL_K
+	FUNCTION_K
+	ASSIGN_K
+	IF_K
+	LET_K
+	RETURN_K
+	FOR_K
+	WHILE_K
+	DO_WHILE_K
+	BLOCK_K
+	EXPR_K
+	PROGRAM_K
+	ATTR_K
+)

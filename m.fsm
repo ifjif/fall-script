@@ -1,0 +1,16 @@
+/*
+ *  fs meta 文件
+ *  记录文件的所有export
+ *
+        type ExportMeta struct {
+        	Name      string
+        	Ast       ast.Node
+        	Source    string
+        	ExportIdx int
+        }
+        非宏函数无须有函数体
+        非本模块，记录引用
+ *
+ *
+ */
+

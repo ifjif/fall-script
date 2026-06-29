@@ -1,4 +1,4 @@
-import {plus} from "./macro_test_mod2"
+import {plus as plus2, abc, nplus as np } from "./macro_test_mod2"
 
 #[macro(call)]
 fn minus(a,b) {
@@ -9,11 +9,21 @@ fn minus(a,b) {
   )
 }
 
-let plusm = plus(1,1)
+fn nonmacro() {
+  let caches = {}
+  fn() {
+    1 + 1
+  }
+}
+
+let plusm = plus2(1,1)
 let minusm = minus(2,1)
 
 let result = plusm + minusm
 
-puts(result)
+puts(abc,result)
 
+export nonmacro
+export plus2
+export np
 export minus

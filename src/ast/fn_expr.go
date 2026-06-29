@@ -48,7 +48,9 @@ func (fe *FnExpr) String() string {
 	}
 	buf.WriteString(strings.Join(params, ", "))
 	buf.WriteString(")")
-	buf.WriteString(fe.Body.String())
+	if fe.Body != nil {
+		buf.WriteString(fe.Body.String())
+	}
 
 	return buf.String()
 }

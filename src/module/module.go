@@ -49,7 +49,7 @@ func ResolveImportPath(currentFilePath, importPath string) string {
 	return filepath.Clean(resolvePath)
 }
 
-func ResolveImportsAndExports(source string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt) ([]*ImportMeta, ExportMetas) {
+func ResolveImportsAndExports(source string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt) (ImportMetas, ExportMetas) {
 	l := NewLoader()
 	er := ExportMetasRegister{}
 
@@ -70,7 +70,7 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 	for _, imp := range imports2 {
 		node := imp.Ast
 		if ok, attr := macro.IsMacroDefinition(node); ok {
-			macro.AddMacro(node, attr, env)
+			macro.AddMacroWithAlias(imp.Name, node, attr, env)
 			importIdx := imp.ImportIdx
 			importD, ok := importsMacroDefine[importIdx]
 			if !ok {
@@ -103,6 +103,7 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 		}
 	}
 	sort.Ints(exportDefines)
+
 	fmt.Println("要删除的export宏定义: ")
 	fmt.Println(exportDefines)
 	exports = macro.DeleteMacroFromExports(exportDefines, exports)
