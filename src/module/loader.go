@@ -2,8 +2,8 @@ package module
 
 import (
 	"encoding/binary"
-	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"zzc/fall-script/src/ast"
@@ -16,7 +16,9 @@ import (
 	"zzc/fall-script/src/parser"
 )
 
-type FileType byte
+type (
+	FileType byte
+)
 
 const (
 	SOURCE FileType = iota
@@ -24,6 +26,7 @@ const (
 )
 
 const (
+	BuildDir       = ".build"
 	SourceSuffix   = ".fs"
 	BytecodeSuffix = ".fsc"
 	MetaSuffix     = ".fsm"
@@ -34,6 +37,8 @@ type Loader struct {
 	sourceSuffix   string
 	bytecodeSuffix string
 	metaSuffix     string
+	buildDir       string
+	Build          bool
 }
 
 func NewLoader() *Loader {
@@ -47,8 +52,20 @@ func NewLoader() *Loader {
 		sourceSuffix:   SourceSuffix,
 		bytecodeSuffix: BytecodeSuffix,
 		metaSuffix:     MetaSuffix,
+		buildDir:       BuildDir,
 	}
 	return loader
+}
+
+func (l *Loader) CreateDir(file string) {
+	dir := filepath.Dir(file)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		panic(err)
+	}
+}
+
+func (l *Loader) BuildFilepath(file string) string {
+	return filepath.Join(l.buildDir, file)
 }
 
 func (l *Loader) BytecodeFilepath(file string) string {
@@ -117,6 +134,10 @@ func (l *Loader) parse(data []byte) *ast.Program {
 }
 
 func (l *Loader) LoadMetaFile(file string) (ExportMetas, error) {
+	// 如是 build 从 .build中加载
+	if l.Build {
+		file = l.BuildFilepath(file)
+	}
 	data, err := l.readMetaFile(file)
 	if err != nil {
 		return nil, err
@@ -175,20 +196,20 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 
 	env := object.NewEnvironment()
 	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
-	fmt.Println(env.Inspect())
-	fmt.Println("代码块：")
-	fmt.Println(program.String())
-	fmt.Println("去宏后的import: ")
-	for _, imp := range imports {
-		fmt.Println(imp.String())
-	}
-	fmt.Println("去宏后的exports: ")
-	for _, exp := range exports {
-		fmt.Println(exp.Declaration.String())
-	}
+	//	fmt.Println(env.Inspect())
+	//	fmt.Println("代码块：")
+	//	fmt.Println(program.String())
+	//	fmt.Println("去宏后的import: ")
+	//	for _, imp := range imports {
+	//		fmt.Println(imp.String())
+	//	}
+	//	fmt.Println("去宏后的exports: ")
+	//	for _, exp := range exports {
+	//		fmt.Println(exp.Declaration.String())
+	//	}
 	nProgram := macro.ExpandMacros(program, env)
-	fmt.Println("展开后的代码块：")
-	fmt.Println(nProgram.String())
+	// fmt.Println("展开后的代码块：")
+	// fmt.Println(nProgram.String())
 
 	cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
 	cmp.Compile()
@@ -196,6 +217,40 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	module.Name = file
 	//	utils.PrintModule(module, "")
 	return module
+}
+
+func (l *Loader) BuildProgram(prev, file string) {
+	source := ResolveImportPath(prev, file)
+
+	data, err := l.readSourceFile(source)
+	if err != nil {
+		panic(err)
+	}
+
+	l.doBuild(data, source)
+}
+
+func (l *Loader) doBuild(data []byte, file string) {
+	program := l.parse(data)
+
+	env := object.NewEnvironment()
+	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
+	nProgram := macro.ExpandMacros(program, env)
+
+	cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
+	cmp.Compile()
+	module := cmp.MainModule()
+	module.Name = file
+
+	bc := binarychunck.Dump(module)
+	bf := l.BuildFilepath(l.BytecodeFilepath(file))
+
+	l.CreateDir(bf)
+	os.WriteFile(bf, bc, 0o644)
+
+	for _, imp := range imports {
+		l.BuildProgram(file, imp.Source)
+	}
 }
 
 func (l *Loader) LoadBytecode(data []byte) *object.Module {
@@ -219,4 +274,13 @@ func (l *Loader) DumpFile(file string) {
 	// fmt.Println("UNDUMP-------------------------------------------")
 	l.LoadBytecode(data)
 	// utils.PrintModule(nmo, "")
+}
+
+func (l *Loader) DumpMeta(file string, data []byte) {
+	mf := l.MetaFilepath(file)
+	if l.Build {
+		mf = l.BuildFilepath(mf)
+	}
+	l.CreateDir(mf)
+	os.WriteFile(mf, data, 0o644)
 }

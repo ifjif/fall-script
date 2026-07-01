@@ -3,6 +3,7 @@ package object
 type ObjectType string
 
 const (
+	BYTE_OBJ              = "BYTE"
 	INTEGER_OBJ           = "INTEGER"
 	BOOLEAN_OBJ           = "BOOLEAN"
 	STRING_OBJ            = "STRING"

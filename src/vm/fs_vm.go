@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"path/filepath"
+
 	"zzc/fall-script/src/builtin"
 	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/module"
@@ -32,23 +34,24 @@ func newFsVM() *FsVM {
 }
 
 func NewFsVMWithFile(file string) *FsVM {
-	filepath := module.ResolveImportPath(file, file)
+	fp := module.ResolveImportPath(".", file)
+	startDir := filepath.Dir(fp)
 	fv := newFsVM()
-	module := fv.loader.LoadFile(filepath)
-	fv.initMain(module)
+	module := fv.loader.LoadFile(fp)
+	fv.initMain(module, startDir)
 	return fv
 }
 
 func NewFsVMWithText(input []byte) *FsVM {
 	fv := newFsVM()
 	module := fv.loader.LoadText(input, ".")
-	fv.initMain(module)
+	fv.initMain(module, ".")
 	return fv
 }
 
-func (fv *FsVM) initMain(mo *object.Module) {
+func (fv *FsVM) initMain(mo *object.Module, dir string) {
 	cmo := fv.load(mo)
-	fv.link(mo, cmo)
+	fv.link(mo, cmo, dir)
 	mainClosure := cmo.Closure()
 	mainThread := fv.NewThread()
 	mainFrame := mainThread.NewFrame(mainClosure)
@@ -91,16 +94,16 @@ func (fv *FsVM) load(mo *object.Module) *object.CompiledModule {
 	return module
 }
 
-func (fv *FsVM) link(mo *object.Module, cmo *object.CompiledModule) {
+func (fv *FsVM) link(mo *object.Module, cmo *object.CompiledModule, dir string) {
 	consts := mo.Cf.Constants
 	for i, iref := range mo.Imports {
 		relativePath := consts[iref.From].Inspect()
-		source := module.ResolveImportPath(mo.Name, relativePath)
+		source := module.ResolveImportPath(filepath.Join(dir, mo.Name), relativePath)
 		target, ok := fv.moduleRegister[source]
 		if !ok {
 			nmod := fv.loader.LoadFile(source)
 			target = fv.load(nmod)
-			fv.link(nmod, target)
+			fv.link(nmod, target, dir)
 		}
 
 		imported := consts[iref.Imported].Inspect()

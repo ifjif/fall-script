@@ -59,51 +59,42 @@ func ResolveImports(l *Loader, file string, imports []*ast.ImportStmt, er Export
 		source := ResolveImportPath(file, imp.Source)
 		eps := resolveExports(l, source, er)
 		for k, spe := range imp.Specifiers {
-			fmt.Printf("找模块 %s 的exports %s\n", source, spe.Imported)
 			ep := LookupExport(eps, spe.Imported, source)
-			fmt.Printf("%+v\n", ep)
-			fmt.Println("解决ree前====================")
-			fmt.Println(ep.Name)
-			a := ep.Ast
-			fmt.Println(a)
 			ResolveReExport(l, source, ep, er)
-			fmt.Println("解决ree====================")
-			fmt.Println(ep.Ast)
-			fmt.Println("解决ree====================end")
 			ip := NewImport2(spe.Local, ep.Ast, i, k)
 			import2s = append(import2s, ip)
 		}
 	}
 
-	fmt.Println("Imports: ")
-	for _, ip := range import2s {
-		fmt.Printf("  name: %s\n", ip.Name)
-		fmt.Printf("  import_idx: %d\n", ip.ImportIdx)
-		fmt.Printf("  name_idx: %d\n", ip.NameIdx)
-		fmt.Printf("  node: %q\n", ip.Ast.String())
-		fmt.Println("")
-	}
-
-	fmt.Println()
-
-	for name, ep := range er {
-		fmt.Println(name)
-		fmt.Println("Exports:")
-		for n, ee := range ep {
-			fmt.Printf("  name: %s\n", n)
-			fmt.Printf("  export_idx: %d\n", ee.ExportIdx)
-			fmt.Printf("  origin: %d\n", ee.Origin)
-			fmt.Printf("  source: %s\n", ee.Source)
-			fmt.Printf("  imported: %s\n", ee.Imported)
-			ast := ""
-			if ee.Ast != nil {
-				ast = ee.Ast.String()
-			}
-			fmt.Printf("  node: %s\n", ast)
-			fmt.Println()
-		}
-		fmt.Println()
-	}
+	//	fmt.Println("Imports: ")
+	//	for _, ip := range import2s {
+	//		fmt.Printf("  name: %s\n", ip.Name)
+	//		fmt.Printf("  import_idx: %d\n", ip.ImportIdx)
+	//		fmt.Printf("  name_idx: %d\n", ip.NameIdx)
+	//		fmt.Printf("  node: %q\n", ip.Ast.String())
+	//		fmt.Println("")
+	//	}
+	//
+	//	fmt.Println()
+	//
+	//	for name, ep := range er {
+	//		fmt.Println(name)
+	//		fmt.Println("Exports:")
+	//		for n, ee := range ep {
+	//			fmt.Printf("  name: %s\n", n)
+	//			fmt.Printf("  export_idx: %d\n", ee.ExportIdx)
+	//			fmt.Printf("  origin: %d\n", ee.Origin)
+	//			fmt.Printf("  source: %s\n", ee.Source)
+	//			fmt.Printf("  imported: %s\n", ee.Imported)
+	//			ast := ""
+	//			if ee.Ast != nil {
+	//				ast = ee.Ast.String()
+	//			}
+	//			fmt.Printf("  node: %s\n", ast)
+	//			fmt.Println()
+	//		}
+	//		fmt.Println()
+	//	}
 
 	return import2s
 }

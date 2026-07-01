@@ -2,7 +2,6 @@ package binarychunck
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"zzc/fall-script/src/object"
 )
@@ -50,13 +49,17 @@ func Undump(data []byte) *object.Module {
 
 func readHeader(r *Reader) {
 	signature := string(r.readBytes(len(SIGNATURE)))
-	fmt.Println(signature)
 	major := r.readUint8()
-	fmt.Println(major)
 	minor := r.readUint8()
-	fmt.Println(minor)
 	patch := r.readUint8()
-	fmt.Println(patch)
+	validateHeader(signature, int(major), int(minor), int(patch))
+	// fmt.Println(signature)
+	// fmt.Println(major)
+	// fmt.Println(minor)
+	// fmt.Println(patch)
+}
+
+func validateHeader(signature string, major, minor, patch int) {
 }
 
 func readModule(r *Reader) *object.Module {

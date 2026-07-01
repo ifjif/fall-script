@@ -235,7 +235,29 @@
 - `Return`
 - `XReturn`
 
-## 7.二进制格式(大端序)
+## 7.export元信息格式(大端序)
+
+    count               u16
+    export_meta{
+      name_length       u16
+      name              string
+      source_length     u16
+      source            string
+      imported_length   u16
+      imported          string
+      export_idx        u8
+      origin            u8
+      ast {
+        kind            u8
+        内部string结构:{
+          tag           u8(short_str:0, long_str:1)
+          length        (0:u8 / 1:u32)
+          content       string
+        }
+      }
+    }
+
+## 8.二进制格式(大端序)
 
     header{
       SIGNATURE = "fallscript"

@@ -1,7 +1,6 @@
 package module
 
 import (
-	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -49,8 +48,7 @@ func ResolveImportPath(currentFilePath, importPath string) string {
 	return filepath.Clean(resolvePath)
 }
 
-func ResolveImportsAndExports(source string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt) (ImportMetas, ExportMetas) {
-	l := NewLoader()
+func ResolveImportsAndExports(l *Loader, source string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt) (ImportMetas, ExportMetas) {
 	er := ExportMetasRegister{}
 
 	exp := resolveExports2(l, source, program, imports, exports, er)
@@ -64,7 +62,7 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 	program = p
 	imports, exports = CollectImportsAndExports(program)
 
-	imports2, exports2 := ResolveImportsAndExports(source, program, imports, exports)
+	imports2, exports2 := ResolveImportsAndExports(l, source, program, imports, exports)
 
 	importsMacroDefine := map[int][]int{}
 	for _, imp := range imports2 {
@@ -81,20 +79,20 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 		}
 	}
 
-	fmt.Println("原始import: ")
-	for _, imp := range imports {
-		fmt.Println(imp.String())
-	}
+	//	fmt.Println("原始import: ")
+	//	for _, imp := range imports {
+	//		fmt.Println(imp.String())
+	//	}
 
-	fmt.Println("要删除的import宏定义:")
-	fmt.Println(importsMacroDefine)
+	//	fmt.Println("要删除的import宏定义:")
+	//	fmt.Println(importsMacroDefine)
 
 	imports = macro.DeleteMacroFromImports(importsMacroDefine, imports)
 
-	fmt.Println("原始exports: ")
-	for _, exp := range exports {
-		fmt.Println(exp.Declaration.String())
-	}
+	//	fmt.Println("原始exports: ")
+	//	for _, exp := range exports {
+	//		fmt.Println(exp.Declaration.String())
+	//	}
 
 	exportDefines := []int{}
 	for _, exp := range exports2 {
@@ -104,12 +102,12 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 	}
 	sort.Ints(exportDefines)
 
-	fmt.Println("要删除的export宏定义: ")
-	fmt.Println(exportDefines)
+	//	fmt.Println("要删除的export宏定义: ")
+	//	fmt.Println(exportDefines)
 	exports = macro.DeleteMacroFromExports(exportDefines, exports)
 
 	macro.DefineMacros(program, env)
-	fmt.Println("找宏结束===============================")
+	//	fmt.Println("找宏结束===============================")
 
 	return program, imports, exports
 }

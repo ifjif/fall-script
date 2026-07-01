@@ -7,7 +7,8 @@ import (
 
 func init() {
 	register("puts", builtin.Puts)
-	// len
+	register("len", builtin.Len)
+	register("byte", builtin.Byte)
 	// first
 	// last
 	// rest

@@ -1,7 +1,6 @@
 package macro
 
 import (
-	"fmt"
 	"sort"
 
 	"zzc/fall-script/src/ast"
@@ -89,7 +88,7 @@ func deleteMacroDefinition(defines []int, program *ast.Program) {
 }
 
 func DeleteMacroFromImports(defines map[int][]int, imports []*ast.ImportStmt) []*ast.ImportStmt {
-	fmt.Println("删除 import中的 宏")
+	// fmt.Println("删除 import中的 宏")
 	rootDefines := make([]int, 0)
 	for i, def := range defines {
 		DeleteMacroFromImport(def, imports[i])
@@ -116,7 +115,7 @@ func DeleteMacroFromImport(defines []int, imports *ast.ImportStmt) {
 }
 
 func DeleteMacroFromExports(defines []int, exports []*ast.ExportStmt) []*ast.ExportStmt {
-	fmt.Println("删除 export中的 宏")
+	// fmt.Println("删除 export中的 宏")
 	for i := len(defines) - 1; i >= 0; i-- {
 		idx := defines[i]
 		exports = append(exports[:idx], exports[idx+1:]...)

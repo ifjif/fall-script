@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"os"
 
 	"zzc/fall-script/src/ast"
 	"zzc/fall-script/src/ast/marshal"
@@ -58,15 +57,15 @@ func (em *ExportMeta) SetReExportInfo(imported string) {
 
 type ExportMetas map[string]*ExportMeta
 
-func (ems ExportMetas) Serialize(file string) {
-	fmt.Printf("====================序列化模块：%s\n======================", file)
+func (ems ExportMetas) Serialize(file string) []byte {
+	// fmt.Printf("====================序列化模块：%s\n======================", file)
 	output := ExportMetas{}
 	for name, em := range ems {
 		nem := NewExportMeta(em.Name, nil, em.Source, em.ExportIdx)
 		if em.Origin == OriginReExport {
-			fmt.Printf("重导入：%s -> %s at %s", em.Name, em.Imported, em.Source)
+			//	fmt.Printf("重导入：%s -> %s at %s", em.Name, em.Imported, em.Source)
 			nem.SetReExportInfo(em.Imported)
-			fmt.Printf("%+v\n", nem)
+			//	fmt.Printf("%+v\n", nem)
 			output[name] = nem
 			continue
 		}
@@ -95,7 +94,7 @@ func (ems ExportMetas) Serialize(file string) {
 		output[name] = nem
 	}
 
-	fmt.Println("=================================序列化ast")
+	//	fmt.Println("=================================序列化ast")
 	//	Name      string
 	//	Ast       ast.Node
 	//	Source    string
@@ -121,8 +120,8 @@ func (ems ExportMetas) Serialize(file string) {
 		}
 	}
 
-	fmt.Println("=================================序列化ast end")
-	os.WriteFile(file+".fsm", buf.Bytes(), 0o644)
+	//	fmt.Println("=================================序列化ast end")
+	return buf.Bytes()
 }
 
 type ExportMetasRegister map[string]ExportMetas
@@ -247,7 +246,8 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 		}
 	}
 
-	exports2.Serialize(source)
+	data := exports2.Serialize(source)
+	l.DumpMeta(source, data)
 
 	return exports2
 }

@@ -14,30 +14,35 @@ func (i *Index) Execute(frame *rt.Frame) {
 	index := frame.PopStack()
 	container := frame.PopStack()
 
+	var nv object.Object
 	switch {
 	case container.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
-		arrayIndex(frame, container, index)
+		nv = arrayIndex(container, index)
 	case container.Type() == object.HASH_OBJ:
-		hashIndex(frame, container, index)
+		nv = hashIndex(container, index)
+	case container.Type() == object.STRING_OBJ:
+		nv = stringIndex(container, index)
 	default:
 		panic("unsupported index operation")
 	}
+
+	frame.PushStack(nv)
 }
 
-func arrayIndex(frame *rt.Frame, arr object.Object, index object.Object) {
+func arrayIndex(arr object.Object, index object.Object) object.Object {
 	array := arr.(*object.Array)
 	idx := index.(*object.Integer)
 	length := len(array.Elems)
 	iv := idx.Value
 
 	if iv < 0 || iv >= int64(length) {
-		panic("index out of bound")
+		panic("Error: index out of bounds")
 	}
 
-	frame.PushStack(array.Elems[iv])
+	return array.Elems[iv]
 }
 
-func hashIndex(frame *rt.Frame, arr object.Object, key object.Object) {
+func hashIndex(arr object.Object, key object.Object) object.Object {
 	hashKey, ok := key.(object.HashTableKey)
 
 	if !ok {
@@ -48,8 +53,22 @@ func hashIndex(frame *rt.Frame, arr object.Object, key object.Object) {
 	pair, ok := hash.Pairs[hashKey.HashKey()]
 
 	if !ok {
-		frame.PushStack(object.NULL)
-	} else {
-		frame.PushStack(pair.Value)
+		return object.NULL
 	}
+	return pair.Value
+}
+
+// todo 添加 byte object
+func stringIndex(str object.Object, index object.Object) object.Object {
+	strO := str.(*object.String)
+
+	idx := index.(*object.Integer).Value
+	v := strO.Value
+	length := len(v)
+
+	if idx < 0 || idx >= int64(length) {
+		panic("Error: index out of bounds")
+	}
+
+	return object.NULL
 }

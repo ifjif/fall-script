@@ -17,6 +17,8 @@ type Cmd struct {
 	File   string
 	Engine string
 	Dump   bool
+	Build  string
+	Clean  bool
 }
 
 func (c *Cmd) Execute() {
