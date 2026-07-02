@@ -1,18 +1,26 @@
 package utils
 
-import "zzc/fall-script/src/object"
+import . "zzc/fall-script/src/object"
 
-func ObjectToBool(o object.Object) bool {
+func ObjectToBool(o Object) bool {
 	switch o := o.(type) {
-	case *object.Null:
+	case *Null:
 		return false
-	case *object.Integer:
+	case *Integer:
 		return o.Value != 0
-	case *object.String:
+	case *String:
 		return o.Value != ""
-	case *object.Boolean:
+	case *Boolean:
 		return o.Value
 	}
 
 	return o != nil
+}
+
+func boolToBoolObject(v bool) Object {
+	if v {
+		return TRUE
+	}
+
+	return FALSE
 }

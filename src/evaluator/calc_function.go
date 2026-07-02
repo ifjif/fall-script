@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	. "zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
 )
 
 func (e *Evaluator) applyFunction(fn Object, args []Object) Object {
@@ -17,7 +18,7 @@ func (e *Evaluator) applyFunction(fn Object, args []Object) Object {
 		return fn.Fn(args...)
 	}
 
-	return e.notAFunctionErr(fn)
+	return e.appendLineAndCol(utils.NotAFunctionErr(fn))
 }
 
 func extendFunctionEnv(fn *Function, args []Object) *Environment {

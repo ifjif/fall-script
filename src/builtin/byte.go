@@ -1,6 +1,8 @@
 package builtin
 
-import "zzc/fall-script/src/object"
+import (
+	"zzc/fall-script/src/object"
+)
 
 func Byte(args ...object.Object) object.Object {
 	length := len(args)

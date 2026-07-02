@@ -14,6 +14,7 @@ import (
 	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/parser"
+	"zzc/fall-script/src/utils"
 )
 
 type (
@@ -215,7 +216,7 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	cmp.Compile()
 	module := cmp.MainModule()
 	module.Name = file
-	//	utils.PrintModule(module, "")
+	utils.PrintModule(module, "")
 	return module
 }
 

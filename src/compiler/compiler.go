@@ -8,6 +8,7 @@ import (
 	. "zzc/fall-script/src/code"
 	"zzc/fall-script/src/object"
 	. "zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
 )
 
 type Compiler struct {
@@ -277,7 +278,9 @@ func (c *Compiler) compileIdentExpr(expr *IdentExpr) {
 	sym, ok := c.SymbolTable.Resolve(name)
 
 	if !ok {
-		// Error
+		// todo
+		err := utils.IdentifierNotFoundErr(name)
+		panic(err.Msg)
 	}
 
 	c.loadSymbol(sym)
@@ -383,7 +386,10 @@ func (c *Compiler) compileIfExpr(expr *IfExpr) {
 
 	if c.lastInstructionIs(Pop) {
 		c.removeLastPopInst()
+	} else {
+		c.emit(Null_)
 	}
+
 	jumpPos := c.emit(Jump, 9999)
 
 	c.changeOperand(jumpIsFalsePos, len(c.CurrentInstructions()))
@@ -397,8 +403,13 @@ func (c *Compiler) compileIfExpr(expr *IfExpr) {
 
 		if c.lastInstructionIs(Pop) {
 			c.removeLastPopInst()
+		} else {
+			c.emit(Null_)
 		}
 	}
+
+	// if else 只返回一个 值，操作数栈-1
+	c.updateScopeStackDepth(-1)
 
 	c.changeOperand(jumpPos, len(c.CurrentInstructions()))
 }

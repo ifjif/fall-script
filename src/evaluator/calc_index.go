@@ -1,39 +1,17 @@
 package evaluator
 
-import . "zzc/fall-script/src/object"
+import (
+	"zzc/fall-script/src/object"
+	. "zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
+)
 
-func (e *Evaluator) calculateArrayIndexExpression(left, index Object) Object {
-	arr := left.(*Array)
-	idx := index.(*Integer)
+func (e *Evaluator) calculateIndexExpression(left, index Object) Object {
+	result := utils.CalcIndex(left, index)
 
-	length := len(arr.Elems)
-
-	if idx.Value < 0 || int(idx.Value) >= length {
-		return e.indexOutOfBoundErr(left, index)
+	if err, ok := result.(*object.ErrorObj); ok {
+		return e.appendLineAndCol(err)
 	}
 
-	return arr.Elems[idx.Value]
-}
-
-func (e *Evaluator) calculateHashIndexExpression(left, index Object) Object {
-	hashObj := left.(*Hash)
-
-	key, ok := index.(HashTableKey)
-	if !ok {
-		return e.unusableAsHashKeyErr(index)
-	}
-
-	pair, ok := hashObj.Pairs[key.HashKey()]
-
-	if !ok {
-		return NULL
-	}
-
-	return pair.Value
-}
-
-func (e *Evaluator) calculateQuoteIndexExpression(left, index Object) Object {
-	quoteObj := left.(*Quote)
-
-	return quoteObj.Extract(index)
+	return result
 }

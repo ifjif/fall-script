@@ -16,7 +16,7 @@ let str1 = "hello "
 let str2 = "world"
 let str = str1 + str2
 
-let b = byte(1)
+let b = byte(11)
 
 puts(c)
 puts(arr)
@@ -24,6 +24,6 @@ puts(len(arr))
 
 puts(str1, str2, str)
 
-puts(b)
+puts(byte(20))
 
 export d

@@ -5,6 +5,7 @@ import (
 	"zzc/fall-script/src/builtin/evalb"
 	"zzc/fall-script/src/object"
 	. "zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
 )
 
 type EvalFn func(*Evaluator, Node) object.Object
@@ -124,7 +125,7 @@ func (e *Evaluator) evalLetStmt(stmt *LetStmt) Object {
 	name := stmt.Name.Value
 	_, ok := e.env.ExistsCur(name)
 	if ok {
-		return e.redeclaredErr(name)
+		return e.appendLineAndCol(utils.RedeclaredErr(name))
 	}
 
 	value := e.eval(stmt.Value)
@@ -232,7 +233,7 @@ func (e *Evaluator) evalIdentExpr(node *IdentExpr) Object {
 		return result
 	}
 
-	return e.identifierNotFoundErr(name)
+	return e.appendLineAndCol(utils.IdentifierNotFoundErr(name))
 }
 
 func (e *Evaluator) evalInteger(node *IntExpr) Object {
@@ -259,7 +260,7 @@ func (e *Evaluator) evalAssignExpr(node *AssignExpr) Object {
 
 		_, ok := e.env.Get(name)
 		if !ok {
-			return e.identifierNotFoundErr(name)
+			return e.appendLineAndCol(utils.IdentifierNotFoundErr(name))
 		}
 
 		value := e.eval(node.Value)
@@ -277,28 +278,7 @@ func (e *Evaluator) evalAssignExpr(node *AssignExpr) Object {
 		value := e.eval(node.Value)
 		value = unwrapReturnValue(value)
 
-		switch {
-		case container.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
-			arr := container.(*object.Array)
-			idx := index.(*object.Integer)
-
-			if idx.Value < 0 || idx.Value >= int64(len(arr.Elems)) {
-				return e.indexOutOfBoundErr(arr, idx)
-			}
-			arr.Elems[idx.Value] = value
-			return value
-		case container.Type() == object.HASH_OBJ:
-			hash := container.(*object.Hash)
-			key, ok := index.(object.HashTableKey)
-			if !ok {
-				return e.unusableAsHashKeyErr(index)
-			}
-			pair := object.HashPair{Key: index, Value: value}
-			hash.Pairs[key.HashKey()] = pair
-			return value
-		default:
-			return e.unsupportedAssignOperation(container)
-		}
+		return e.assign4Index(container, index, value)
 	}
 
 	// 不会执行到此
@@ -356,10 +336,9 @@ func (e *Evaluator) evalHashExpr(node *HashExpr) Object {
 			return keyObj
 		}
 
-		key, ok := keyObj.(HashTableKey)
-
-		if !ok {
-			return e.unusableAsHashKeyErr(keyObj)
+		key, err := utils.IsHashable(keyObj)
+		if err != nil {
+			return e.appendLineAndCol(err)
 		}
 
 		valueObj := e.eval(pair.Value)
@@ -388,16 +367,7 @@ func (e *Evaluator) evalIndexExpr(node *IndexExpr) Object {
 	}
 	e.curNode = curNode
 
-	switch {
-	case leftObj.Type() == ARRAY_OBJ && indexObj.Type() == INTEGER_OBJ:
-		return e.calculateArrayIndexExpression(leftObj, indexObj)
-	case leftObj.Type() == HASH_OBJ:
-		return e.calculateHashIndexExpression(leftObj, indexObj)
-	case leftObj.Type() == QUOTE_OBJ:
-		return e.calculateQuoteIndexExpression(leftObj, indexObj)
-	}
-
-	return e.unsupportedIndexOperationErr(leftObj, indexObj)
+	return e.calculateIndexExpression(leftObj, indexObj)
 }
 
 func (e *Evaluator) evalFnExpre(node *FnExpr) Object {

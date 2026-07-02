@@ -3,6 +3,7 @@ package math
 import (
 	"zzc/fall-script/src/instructions/base"
 	"zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
 	"zzc/fall-script/src/vm/rt"
 )
 
@@ -11,13 +12,13 @@ type Neg struct {
 }
 
 func (n *Neg) Execute(frame *rt.Frame) {
-	o := frame.PopStack()
+	right := frame.PopStack()
 
-	i, ok := o.(*object.Integer)
-	if !ok {
-		panic("not integer!")
+	result := utils.CalcPrefix("-", right)
+
+	if err, ok := result.(*object.ErrorObj); ok {
+		panic(err.Msg)
 	}
 
-	i.Value = -i.Value
-	frame.PushStack(i)
+	frame.PushStack(result)
 }

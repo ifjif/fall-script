@@ -3,6 +3,7 @@ package math
 import (
 	"zzc/fall-script/src/instructions/base"
 	"zzc/fall-script/src/object"
+	"zzc/fall-script/src/utils"
 	"zzc/fall-script/src/vm/rt"
 )
 
@@ -14,9 +15,11 @@ func (s *Sub) Execute(frame *rt.Frame) {
 	right := frame.PopStack()
 	left := frame.PopStack()
 
-	rv := right.(*object.Integer).Value
-	lv := left.(*object.Integer).Value
+	result := utils.CalcInfix("-", left, right)
 
-	nv := &object.Integer{Value: lv - rv}
-	frame.PushStack(nv)
+	if err, ok := result.(*object.ErrorObj); ok {
+		panic(err.Msg)
+	}
+
+	frame.PushStack(result)
 }

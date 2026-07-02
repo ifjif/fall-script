@@ -12,13 +12,13 @@ type Not struct {
 }
 
 func (n *Not) Execute(frame *rt.Frame) {
-	o := frame.PopStack()
+	right := frame.PopStack()
 
-	b := utils.ObjectToBool(o)
+	result := utils.CalcPrefix("!", right)
 
-	if !b {
-		frame.PushStack(object.TRUE)
-	} else {
-		frame.PushStack(object.FALSE)
+	if err, ok := result.(*object.ErrorObj); ok {
+		panic(err.Msg)
 	}
+
+	frame.PushStack(result)
 }

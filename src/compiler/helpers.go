@@ -49,6 +49,10 @@ func (c *Compiler) removeLastPopInst() {
 	newInsts := scope.Instructions[:last.Pos]
 	scope.LastInst = prev
 	scope.Instructions = newInsts
+
+	// pop 已经减少了 操作数栈 1
+	// 移出后，需要 恢复 +1
+	c.updateScopeStackDepth(1)
 }
 
 func (c *Compiler) changeOperand(pos int, operand int) {
