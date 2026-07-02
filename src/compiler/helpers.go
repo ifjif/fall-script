@@ -117,7 +117,11 @@ func (c *Compiler) loadSymbol(sym Symbol) {
 	case GLOBAL:
 		c.emit(code.GetGlobal, sym.Pos)
 	case LOCAL:
-		c.emit(code.GetLocal, sym.Pos)
+		if sym.Captured {
+			c.emit(code.GetBoxLocal, sym.Pos)
+		} else {
+			c.emit(code.GetLocal, sym.Pos)
+		}
 	case FREE:
 		c.emit(code.GetFree, sym.Pos)
 	case BUILTIN:
@@ -132,7 +136,13 @@ func (c *Compiler) storeSymbol(sym Symbol) {
 	case GLOBAL:
 		c.emit(code.SetGlobal, sym.Pos)
 	case LOCAL:
-		c.emit(code.SetLocal, sym.Pos)
+		if sym.Captured {
+			c.emit(code.GetBoxLocal, sym.Pos)
+		} else {
+			c.emit(code.SetLocal, sym.Pos)
+		}
+	case FREE:
+		c.emit(code.SetFree, sym.Pos)
 	}
 }
 

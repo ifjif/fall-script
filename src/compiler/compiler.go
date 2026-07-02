@@ -454,7 +454,14 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	cfIdx := c.addConstant(cf)
 
 	for _, sym := range freeTable {
-		c.loadSymbol(sym)
+		switch sym.Scope {
+		case LOCAL:
+			c.emit(code.GetLocal, sym.Pos)
+			c.emit(code.NewBoxLocal, sym.Pos)
+			c.emit(code.GetLocal, sym.Pos)
+		case FREE:
+			c.emit(code.GetFreeRaw, sym.Pos)
+		}
 	}
 
 	c.emit(Closure_, cfIdx, len(freeTable))

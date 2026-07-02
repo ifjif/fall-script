@@ -9,6 +9,7 @@ const (
 	STRING_OBJ            = "STRING"
 	ARRAY_OBJ             = "ARRAY"
 	HASH_OBJ              = "HASH"
+	BOX_OBJ               = "BOX"
 	FUNCTION_OBJ          = "FUNCTION"
 	COMPILED_FUNCTION_OBJ = "COMPILED_FUNCTION"
 	BUILTIN_FUNCTION_OBJ  = "BUILTIN_FUNCTION"

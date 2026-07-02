@@ -33,7 +33,12 @@ const (
 	GetGlobal
 	SetLocal
 	GetLocal
+	NewBoxLocal
+	SetBoxLocal
+	GetBoxLocal
+	SetFree
 	GetFree
+	GetFreeRaw
 	GetBuiltin
 	SetIndex
 	Closure_

@@ -2,7 +2,6 @@ fn delimiter() {
   puts("---------------------------------------")
 }
 
-/*
 let a = 1 + 1
 puts("加法: 1 + 1 = ")
 puts(a)
@@ -52,9 +51,7 @@ let b = true && false
 puts("逻辑与: true && false = ")
 puts(b)
 delimiter()
-*/
 
-/*
 puts("if表达式: 
 let b1 = if(true) {
     b1 = 1
@@ -68,7 +65,6 @@ let b1 = if(true) {
   b1 = 2
 }
 puts(b1)
-*/
 
 
 puts("if表达式:

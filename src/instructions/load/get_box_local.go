@@ -6,17 +6,17 @@ import (
 	"zzc/fall-script/src/vm/rt"
 )
 
-type GetFree struct {
+type GetBoxLocal struct {
 	index int
 }
 
-func (gf *GetFree) FetchOperand(br *base.ByteReader) {
+func (gb *GetBoxLocal) FetchOperand(br *base.ByteReader) {
 	idx := br.ReadUint8()
-	gf.index = int(idx)
+	gb.index = int(idx)
 }
 
-func (gf *GetFree) Execute(frame *rt.Frame) {
-	o := frame.GetFree(gf.index)
+func (gb *GetBoxLocal) Execute(frame *rt.Frame) {
+	o := frame.GetLocal(gb.index)
 	if o.Type() != object.BOX_OBJ {
 		// todo
 		panic("xxxxx")

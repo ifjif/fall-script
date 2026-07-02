@@ -60,7 +60,17 @@ func (c *Compiler) getStackDelta(op OpCode, operands []int) int {
 		return -1
 	case GetLocal:
 		return +1
+	case NewBoxLocal:
+		return -1
+	case SetBoxLocal:
+		return -1
+	case GetBoxLocal:
+		return +1
+	case SetFree:
+		return -1
 	case GetFree:
+		return +1
+	case GetFreeRaw:
 		return +1
 	case GetBuiltin:
 		return +1

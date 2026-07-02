@@ -95,8 +95,18 @@ func NewInstruction(opcode byte) base.Instruction {
 		return &SetLocal{}
 	case code.GetLocal:
 		return &GetLocal{}
+	case code.NewBoxLocal:
+		return &NewBoxLocal{}
+	case code.SetBoxLocal:
+		return &SetBoxLocal{}
+	case code.GetBoxLocal:
+		return &GetBoxLocal{}
+	case code.SetFree:
+		return &SetFree{}
 	case code.GetFree:
 		return &GetFree{}
+	case code.GetFreeRaw:
+		return &GetFreeRaw{}
 	case code.GetBuiltin:
 		return &GetBuiltin{}
 	case code.SetIndex:

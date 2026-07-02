@@ -19,9 +19,10 @@ const (
 )
 
 type Symbol struct {
-	Name  string
-	Pos   int
-	Scope SymbolScope
+	Name     string
+	Pos      int
+	Scope    SymbolScope
+	Captured bool
 }
 
 type SymbolTable struct {
@@ -107,6 +108,11 @@ func (st *SymbolTable) Resolve(name string) (Symbol, bool) {
 }
 
 func (st *SymbolTable) defineFree(origin Symbol) Symbol {
+	if origin.Scope == LOCAL && !origin.Captured {
+		origin.Captured = true
+		st.outer.store[origin.Name] = origin
+		origin.Captured = false
+	}
 	st.FreeSymbols = append(st.FreeSymbols, origin)
 
 	free := Symbol{Name: origin.Name, Pos: len(st.FreeSymbols) - 1, Scope: FREE}
