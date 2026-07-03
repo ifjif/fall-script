@@ -110,7 +110,17 @@ func (p *Parser) parseIndexExpr(left ExprNode) ExprNode {
 	expr := &IndexExpr{Token: p.curToken, Left: left}
 
 	p.nextToken()
-	expr.Index = p.parseExpr(LOWEST)
+
+	if p.curTypeIs(COLON) {
+		expr.Index = p.parseSliceExpr(nil)
+	} else {
+		start := p.parseExpr(LOWEST)
+		if p.peekTypeIs(COLON) {
+			p.nextToken()
+			start = p.parseSliceExpr(start)
+		}
+		expr.Index = start
+	}
 
 	if !p.expectPeek(RBRACKET) {
 		return nil
@@ -314,4 +324,34 @@ func (p *Parser) parseFnParams(end TokenType) []*IdentExpr {
 	}
 
 	return list
+}
+
+func (p *Parser) parseSliceExpr(start ExprNode) ExprNode {
+	token := p.curToken
+	node := &SliceExpr{Token: token, Start: start}
+
+	if !p.peekTypeIs(COLON) && !p.peekTypeIs(RBRACKET) { // [x:x
+		p.nextToken()
+		node.End = p.parseExpr(LOWEST)
+	}
+
+	if p.peekTypeIs(COLON) { // [x:x:
+		p.nextToken()
+
+		if !p.peekTypeIs(COLON) && !p.peekTypeIs(RBRACKET) { // [x:x:x
+			p.nextToken()
+			node.Step = p.parseExpr(LOWEST)
+		}
+
+		if p.peekTypeIs(COLON) { // [x:x:x:
+			p.nextToken()
+
+			if !p.peekTypeIs(RBRACKET) { // [x:x:x:x
+				p.nextToken()
+				node.Cap = p.parseExpr(LOWEST)
+			}
+		}
+	}
+
+	return node
 }

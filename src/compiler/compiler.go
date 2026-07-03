@@ -7,7 +7,6 @@ import (
 	"zzc/fall-script/src/code"
 	. "zzc/fall-script/src/code"
 	"zzc/fall-script/src/object"
-	. "zzc/fall-script/src/object"
 	"zzc/fall-script/src/utils"
 )
 
@@ -126,6 +125,8 @@ func (c *Compiler) doCompile(node Node) {
 		c.compileIfExpr(node)
 	case *FnExpr:
 		c.compileFnExpr(node)
+	case *SliceExpr:
+		c.compileSliceExpr(node)
 	}
 }
 
@@ -240,13 +241,11 @@ func (c *Compiler) compileAssignExpr(expr *AssignExpr) {
 }
 
 func (c *Compiler) compileIntExpr(expr *IntExpr) {
-	value := &Integer{Value: expr.Value}
-	c.emit(Const, c.addConstant(value))
+	c.emit(Const, c.addIntConstant(expr.Value))
 }
 
 func (c *Compiler) compileStrExpr(expr *StrExpr) {
-	value := &String{Value: expr.Value}
-	c.emit(Const, c.addConstant(value))
+	c.emit(Const, c.addStrConstant(expr.Value))
 }
 
 func (c *Compiler) compileBoolExpr(expr *BoolExpr) {
@@ -362,8 +361,14 @@ func (c *Compiler) compilePrefixExpr(expr *PrefixExpr) {
 
 func (c *Compiler) compileIndexExpr(expr *IndexExpr) {
 	c.doCompile(expr.Left)
-	c.doCompile(expr.Index)
-	c.emit(Index)
+	index := expr.Index
+	c.doCompile(index)
+
+	if _, ok := index.(*SliceExpr); ok {
+		c.emit(Slice)
+	} else {
+		c.emit(Index)
+	}
 }
 
 func (c *Compiler) compileCallExpr(expr *CallExpr) {
@@ -469,5 +474,36 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	if !expr.UnName {
 		c.emit(Dup)
 		c.storeSymbol(mSym)
+	}
+}
+
+func (c *Compiler) compileSliceExpr(sliceExpr *SliceExpr) {
+	start := sliceExpr.Start
+	end := sliceExpr.End
+	step := sliceExpr.Step
+	capc := sliceExpr.Cap
+
+	if start == nil {
+		c.emit(Null_)
+	} else {
+		c.doCompile(start)
+	}
+
+	if end == nil {
+		c.emit(Null_)
+	} else {
+		c.doCompile(end)
+	}
+
+	if step == nil {
+		c.emit(Null_)
+	} else {
+		c.doCompile(step)
+	}
+
+	if capc == nil {
+		c.emit(Null_)
+	} else {
+		c.doCompile(capc)
 	}
 }

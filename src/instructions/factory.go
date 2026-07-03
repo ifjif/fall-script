@@ -34,6 +34,7 @@ var (
 	true_       = &True{}
 	false_      = &False{}
 	index       = &Index{}
+	slice_      = &Slice{}
 	set_index   = &SetIndex{}
 	dup         = &Dup{}
 	cur_closure = &CurClosure{}
@@ -81,6 +82,8 @@ func NewInstruction(opcode byte) base.Instruction {
 		return &Hash{}
 	case code.Index:
 		return index
+	case code.Slice:
+		return slice_
 	case code.Call:
 		return &Call{}
 	case code.Jump:

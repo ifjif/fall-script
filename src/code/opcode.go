@@ -26,6 +26,7 @@ const (
 	Array_
 	Hash_
 	Index
+	Slice
 	Call
 	Jump
 	JumpIsFalse

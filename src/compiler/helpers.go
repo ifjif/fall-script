@@ -83,9 +83,28 @@ func (c *Compiler) addConstant(o object.Object) int {
 	return len(scope.Constants) - 1
 }
 
+func (c *Compiler) addIntConstant(i int64) int {
+	crefs := c.CurrentConstantRefs()
+	if idx, ok := crefs[i]; ok {
+		return idx
+	}
+	value := &object.Integer{Value: i}
+	idx := c.addConstant(value)
+	crefs[i] = idx
+
+	return idx
+}
+
 func (c *Compiler) addStrConstant(str string) int {
+	crefs := c.CurrentConstantRefs()
+	if idx, ok := crefs[str]; ok {
+		return idx
+	}
 	strObj := &object.String{Value: str}
-	return c.addConstant(strObj)
+	idx := c.addConstant(strObj)
+	crefs[str] = idx
+
+	return idx
 }
 
 func (c *Compiler) currentScope() *Scope {
@@ -98,6 +117,10 @@ func (c *Compiler) CurrentInstructions() code.Instructions {
 
 func (c *Compiler) setInstructions(insts code.Instructions) {
 	c.scopes[c.scopeIndex].Instructions = insts
+}
+
+func (c *Compiler) CurrentConstantRefs() map[any]int {
+	return c.scopes[c.scopeIndex].ConstantRefs
 }
 
 func (c *Compiler) CurrentConstant() []object.Object {

@@ -116,6 +116,8 @@ func unmarshal(ar *AstReader) Node {
 		return unmarshalHash(ar)
 	case INDEX_K:
 		return unmarshalIndex(ar)
+	case SLICE_K:
+		return unmarshalSlice(ar)
 	case CALL_K:
 		return unmarshalCall(ar)
 	case FUNCTION_K:
@@ -283,6 +285,29 @@ func unmarshalIndex(r *AstReader) Node {
 	return &IndexExpr{Token: tok, Left: left, Index: index}
 }
 
+func unmarshalSlice(r *AstReader) Node {
+	tok := r.readToken()
+	se := &SliceExpr{Token: tok}
+	start := unmarshal(r)
+	if start != nil {
+		se.Start = start.(ExprNode)
+	}
+	end := unmarshal(r)
+	if end != nil {
+		se.Start = start.(ExprNode)
+	}
+	step := unmarshal(r)
+	if step != nil {
+		se.Start = start.(ExprNode)
+	}
+	capc := unmarshal(r)
+	if capc != nil {
+		se.Start = start.(ExprNode)
+	}
+
+	return se
+}
+
 func unmarshalCall(r *AstReader) Node {
 	tok := r.readToken()
 
@@ -296,7 +321,7 @@ func unmarshalFunction(r *AstReader) Node {
 	tok := r.readToken()
 
 	name := r.readString()
-	ident := unmarshal(r).(*IdentExpr)
+	ident := unmarshal(r)
 	ps := r.readByte()
 	params := unmarshalElems(r, int(ps))
 	np := getTypedItems[*IdentExpr](params)
@@ -309,10 +334,16 @@ func unmarshalFunction(r *AstReader) Node {
 	fn := &FnExpr{
 		Token:  tok,
 		Name:   name,
-		Ident:  ident,
 		Params: np,
 		UnName: unName,
 		Attrs:  na,
+	}
+
+	if ident == nil {
+		fn.Ident = nil
+	} else {
+		ni := ident.(*ast.IdentExpr)
+		fn.Ident = ni
 	}
 
 	if body == nil {

@@ -53,11 +53,20 @@ func IdentifierNotFoundErr(name string) *ErrorObj {
 	return NewError("Error(identifier not found): %q", name)
 }
 
+func ConvertToIntegerErr(value Object) *ErrorObj {
+	valueMsg := objectMsg(value)
+	return NewError("Error(cannot convert to integer): %s", valueMsg)
+}
+
+func NotASliceErr(left Object) *ErrorObj {
+	return NewError("Error(cannot be a slice): %s", left.Type())
+}
+
 func RedeclaredErr(name string) *ErrorObj {
-	return NewError("Error(redeclared): %q at line", name)
+	return NewError("Error(redeclared): %q", name)
 }
 
 func NotAFunctionErr(o Object) *ErrorObj {
 	msg := o.Type()
-	return NewError("Error(not a function): %s at line", msg)
+	return NewError("Error(not a function): %s", msg)
 }

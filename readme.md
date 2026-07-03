@@ -88,6 +88,7 @@
 - `a`
 - `a = 1`
 - `a[0]`
+- `a[x:x:x:x]`
 - `a[index/key] = xxx (map中不存在，返回null)`
 - `[1,2,3]`
 - `{a:1, b:2,true:1, false:2, 1:1, 2:2, "abc":12}`
@@ -119,7 +120,48 @@
 - `do{...}while(xx)`
 - `return xx;`
 
-## **6.宏**
+## 6.slice
+
+     [start : end : step : max]
+
+     step 不能为0, 默认为1
+     当step 不是默认值，而是指定值，如果max存在，panic
+     当step 是默认值，而slice是string, 如果max存在,panic
+
+     step > 0 不为默认值 时
+     0 <= start < end <= max <= rawMax (end, max, rawMax 为最大不可到达的索引位置)
+     start 省略 默认 0
+     end 省略 默认 len(arr)
+
+     step < 0 时（会 copy）
+     len(arr) > start > end >= -1
+     start, end 可为 负数,需要保证
+     len(arr) > len(arr) + start > len(arr) + end
+     start 省略 默认为 len(arr) - 1
+     end 省略 默认为 -1
+
+     let arr = [1,2,3,4]
+
+     arr[1]
+     arr[1:]
+     arr[1:2]
+     arr[1:2:3]
+     arr[1:2:3:4]
+
+     arr[:1]
+     arr[:1:2]
+     arr[:1:2:3]
+
+     arr[::1]
+     arr[::1:2]
+
+     arr[:::1]
+
+     arr[:]
+     arr[::]
+     arr[:::]
+
+## 7.宏
 
 **不支持宏生宏**
 
@@ -199,7 +241,13 @@
       result=
       router-result
 
-## 6.操作码
+## 8.内置函数
+
+- `len`
+- `byte`
+- `puts`
+
+## 9.操作码
 
 - `Nop(u8:0)`
 - `Null_`
@@ -220,6 +268,7 @@
 - `Array_`
 - `Hash_`
 - `Index`
+- `Slice`
 - `Call`
 - `Jump`
 - `JumpIsFalse`
@@ -227,7 +276,12 @@
 - `GetGlobal`
 - `SetLocal`
 - `GetLocal`
+- `NewBoxLocal`
+- `SetBoxLocal`
+- `GetBoxLocal`
+- `SetFree`
 - `GetFree`
+- `GetFreeRaw`
 - `GetBuiltin`
 - `Closure_`
 - `CurClosure`
@@ -235,7 +289,7 @@
 - `Return`
 - `XReturn`
 
-## 7.export元信息格式(大端序)
+## 10.export元信息格式(大端序)
 
     count               u16
     export_meta{
@@ -257,7 +311,7 @@
       }
     }
 
-## 8.二进制格式(大端序)
+## 11.二进制格式(大端序)
 
     header{
       SIGNATURE = "fallscript"

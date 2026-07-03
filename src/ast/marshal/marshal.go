@@ -139,6 +139,10 @@ func isNil(node Node) bool {
 		if node == nil {
 			return true
 		}
+	case *SliceExpr:
+		if node == nil {
+			return true
+		}
 	case *InfixExpr:
 		if node == nil {
 			return true
@@ -210,6 +214,8 @@ func marshalAst(node Node, awr *AstWriter) {
 		marshalAssign(node, awr)
 	case *IndexExpr:
 		marshalIndex(node, awr)
+	case *SliceExpr:
+		marshalSlice(node, awr)
 	case *InfixExpr:
 		marshalInfix(node, awr)
 	case *PrefixExpr:
@@ -328,6 +334,15 @@ func marshalIndex(node *IndexExpr, w *AstWriter) {
 	w.writeToken(node.Token)
 	marshalAst(node.Left, w)
 	marshalAst(node.Index, w)
+}
+
+func marshalSlice(node *SliceExpr, w *AstWriter) {
+	w.writeKind(SLICE_K)
+	w.writeToken(node.Token)
+	marshalAst(node.Start, w)
+	marshalAst(node.End, w)
+	marshalAst(node.Step, w)
+	marshalAst(node.Cap, w)
 }
 
 func marshalInfix(node *InfixExpr, w *AstWriter) {

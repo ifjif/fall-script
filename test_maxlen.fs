@@ -1,6 +1,4 @@
 fn maxLength(str) {
-
-  str[0] = 1
   let occur = {}
 
   let left = 0

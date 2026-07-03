@@ -46,6 +46,8 @@ func (c *Compiler) getStackDelta(op OpCode, operands []int) int {
 		return -(2*operand - 1)
 	case Index:
 		return -1
+	case Slice:
+		return -4
 	case Call:
 		return -operand
 	case Jump:

@@ -30,6 +30,7 @@ var definitions = map[OpCode]*Definition{
 	Array_:      {"array", []int{2}},
 	Hash_:       {"hash", []int{2}},
 	Index:       {"index", []int{}},
+	Slice:       {"slice", []int{}},
 	Call:        {"call", []int{2}},
 	Jump:        {"jump", []int{2}},
 	JumpIsFalse: {"jump_is_false", []int{2}},

@@ -26,6 +26,8 @@ const (
 	GLOBAL_REF_OBJ        = "GLOBAL_REF"
 )
 
+const SliceOmitted = -999999
+
 type BuiltinFunction func(args ...Object) Object
 
 type Object interface {
@@ -35,4 +37,20 @@ type Object interface {
 
 type HashTableKey interface {
 	HashKey() HashKey
+}
+
+type Sliceable interface {
+	Object
+	Len() int
+	Cap() int
+	Slice(start, end, capc int) Sliceable
+	SliceCopy(start, end, step int) Sliceable
+}
+
+func calcNewLen(start, end, step int) int {
+	if step > 0 {
+		return (end - start + step - 1) / step
+	}
+
+	return (start - end - step - 1) / -step
 }

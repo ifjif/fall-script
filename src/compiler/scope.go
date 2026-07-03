@@ -7,6 +7,7 @@ import (
 
 type Scope struct {
 	Constants     []object.Object
+	ConstantRefs  map[any]int
 	Instructions  code.Instructions
 	LastInst      code.EmittedInstruct
 	PrevInst      code.EmittedInstruct
@@ -17,6 +18,7 @@ type Scope struct {
 func NewScope() *Scope {
 	return &Scope{
 		Constants:    make([]object.Object, 0),
+		ConstantRefs: map[any]int{},
 		Instructions: code.Instructions{},
 	}
 }
