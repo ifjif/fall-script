@@ -64,7 +64,7 @@ func calcStringIndex(left, index Object) Object {
 		return IndexOutOfBoundErr(left, index)
 	}
 
-	return object.NULL
+	return &object.Byte{Value: v[idx]}
 }
 
 func calcQuoteIndex(left, index Object) Object {

@@ -36,9 +36,17 @@ func UnsupportedIndexOperationErr(left, index Object) *ErrorObj {
 	return NewError("Error(unsupported index operation): %s[%s]", leftMsg, indexMsg)
 }
 
-func UnsupportedAssignOperation(left Object) *ErrorObj {
+func UnsupportedIndexAssignOperationErr(left, index, value Object) *ErrorObj {
 	leftMsg := objectMsg(left)
-	return NewError("Error(unsupported assign operation): %s = ...", leftMsg)
+	indexMsg := objectMsg(index)
+	valueMsg := objectMsg(value)
+	return NewError("Error(unsupported index assign operation): %s[%s] = %s", leftMsg, indexMsg, valueMsg)
+}
+
+func UnsupportedAssignOperation(left, value Object) *ErrorObj {
+	leftMsg := objectMsg(left)
+	valueMsg := objectMsg(value)
+	return NewError("Error(unsupported assign operation): %s = %s", leftMsg, valueMsg)
 }
 
 func IdentifierNotFoundErr(name string) *ErrorObj {

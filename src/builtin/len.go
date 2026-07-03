@@ -25,6 +25,9 @@ func Len(args ...object.Object) object.Object {
 	case object.HASH_OBJ:
 		hash := arg1.(*object.Hash)
 		return &object.Integer{Value: int64(len(hash.Pairs))}
+	case object.STRING_OBJ:
+		str := arg1.(*object.String)
+		return &object.Integer{Value: int64(len(str.Value))}
 	}
 
 	msg := fmt.Sprintf("expected collection type, got %s", t)

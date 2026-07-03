@@ -101,9 +101,6 @@ let b3 = if(false) {
 puts(b3)
 delimiter()
 
-
-
-/*
 puts("for语句: 
 let b4 = 0
 for (let i = 0; i <= 10; i = i+1) {
@@ -115,11 +112,7 @@ for(let i = 0; i <= 10; i = i+1) {
   b4 = b4 + i
 }
 puts(b4)
-*/
 
-
-
-/*
 puts("for语句:
 let b5 = 0;
 for(;b5 <= 10;) {
@@ -132,10 +125,7 @@ for(;b5 <= 10;) {
 }
 puts(b5)
 delimiter()
-*/
 
-
-/*
 puts("while语句:
 let b6 = 0;
 while(b6 >= 10) {
@@ -148,10 +138,7 @@ while(b6 <= 10) {
 }
 puts(b6)
 delimiter()
-*/
 
-
-/*
 puts("do-while语句:
 let b7 = 0;
 do{
@@ -164,10 +151,67 @@ do{
 }while(b7 <= 10)
 puts(b7)
 delimiter()
-*/
 
 let b8 = [1,true, false,"hello",1,2]
-puts("数组：[1,true, false,'hello'] = ")
+puts("数组：[1,true, false,'hello',1,2] = ")
 puts(b8)
 delimiter()
 
+let b9 = {1:1, true:true,false:false, "abc":"abc"}
+puts("map: {1:1, true:true,false:false, 'abc':'abc'} ")
+puts(b9)
+delimiter()
+
+let c = [1,2,3,4][0]
+puts("数组索引: [1,2,3,4][0]")
+puts(c)
+
+let c2 = {1:1, false:false, true:true, "abc":"abc"}
+puts("map索引：{1:1, false:false, true:true, 'abc':'abc'}")
+puts("[1] = ")
+puts(c2[1])
+puts("[false] = ")
+puts(c2[false])
+puts("[true] = ")
+puts(c2[true])
+puts("['abc'] = ")
+puts(c2["abc"])
+puts("[2] = ")
+puts(c2[2])
+
+let c3 = "abcdefg"
+puts("字符串索引: 'abcdefg'")
+puts("[0] = ")
+puts(c3[0])
+puts("[1] = ")
+puts(c3[1])
+delimiter()
+
+puts("内置函数puts: ")
+puts("puts(1,2,3)")
+puts(1,2,3)
+delimiter()
+
+puts("内置函数byte: ")
+puts("byte(65) = ")
+let c4 = byte(65)
+puts(c4)
+
+puts("byte('A') = ")
+let c5 = byte("A")
+puts(c5)
+delimiter()
+
+puts("内置函数len: ")
+puts("len([1,2,3])")
+let c6 = len([1,2,3])
+puts(c6)
+
+puts("len({1:1,2:2,3:3})")
+let c7 = len({1:1, 2:2, 3:3})
+puts(c7)
+
+puts("len('abcd')")
+let c8 = len("abcd")
+puts(c8)
+delimiter()

@@ -27,5 +27,5 @@ func Assign4Index(container, index, value Object) Object {
 		return value
 	}
 
-	return UnsupportedAssignOperation(container)
+	return UnsupportedIndexAssignOperationErr(container, index, value)
 }
