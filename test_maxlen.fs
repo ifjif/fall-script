@@ -1,5 +1,5 @@
 fn maxLength(str) {
-  let occur = {}
+  let occurred = {}
 
   let left = 0
   let max = 0
@@ -8,13 +8,13 @@ fn maxLength(str) {
 
   for (let i = 0; i < length; i = i + 1) {
     let ch = str[i]
-    let idx = occur[ch]
+    let idx = occurred[ch]
 
-    if ( idx != null && idx >=0 && idx >= left) {
+    if ( idx != null && idx >= left) {
       left = idx + 1
     }
 
-    occur[ch] = i
+    occurred[ch] = i
 
     let currentLen = i - left + 1
     if (currentLen > max) {
@@ -22,8 +22,11 @@ fn maxLength(str) {
     }
   }
 
+  let s = str[left:left+max]
+
   puts(max)
   puts(occur)
+  puts(s)
 }
 
 maxLength("abca")

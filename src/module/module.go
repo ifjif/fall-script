@@ -54,6 +54,10 @@ func ResolveImportsAndExports(l *Loader, source string, program *ast.Program, im
 	exp := resolveExports2(l, source, program, imports, exports, er)
 	imp := ResolveImports(l, source, imports, er)
 
+	// 生成.fsm文件
+	data := exp.Serialize(source)
+	l.DumpMeta(source, data)
+
 	return imp, exp
 }
 

@@ -246,8 +246,5 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 		}
 	}
 
-	data := exports2.Serialize(source)
-	l.DumpMeta(source, data)
-
 	return exports2
 }
