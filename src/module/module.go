@@ -1,6 +1,7 @@
 package module
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -16,6 +17,7 @@ func CollectImportsAndExports(program *ast.Program) (imports []*ast.ImportStmt, 
 	nStmts := make([]ast.StmtNode, 0)
 	imports = make([]*ast.ImportStmt, 0)
 	exports = make([]*ast.ExportStmt, 0)
+	structs := make([]*ast.StructDeclStmt, 0)
 	for _, stmt := range program.Stmts {
 		switch stmt := stmt.(type) {
 		case *ast.ImportStmt:
@@ -31,8 +33,16 @@ func CollectImportsAndExports(program *ast.Program) (imports []*ast.ImportStmt, 
 				nStmts = append(nStmts, declaration.(ast.StmtNode))
 			}
 		default:
+			if sd, ok := stmt.(*ast.StructDeclStmt); ok {
+				structs = append(structs, sd)
+			}
 			nStmts = append(nStmts, stmt)
 		}
+	}
+
+	fmt.Println("当前模块收集到的structs")
+	for _, st := range structs {
+		fmt.Println(st.String())
 	}
 
 	program.Stmts = nStmts

@@ -24,6 +24,8 @@ const (
 	IMPORT_REF_OBJ        = "IMPORT_REF"
 	EXPORT_REF_OBJ        = "EXPORT_REF"
 	GLOBAL_REF_OBJ        = "GLOBAL_REF"
+	STRUCT_META_OBJ       = "STRUCT_META"
+	STRUCT_INSTANCE_OBJ   = "STRUCT_INSTANCE"
 )
 
 const SliceOmitted = -999999

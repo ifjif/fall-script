@@ -38,6 +38,8 @@ var (
 	set_index   = &SetIndex{}
 	dup         = &Dup{}
 	cur_closure = &CurClosure{}
+	get_field   = &GetField{}
+	set_field   = &SetField{}
 	ret         = &Return{}
 	xret        = &XReturn{}
 )
@@ -120,6 +122,14 @@ func NewInstruction(opcode byte) base.Instruction {
 		return cur_closure
 	case code.Dup:
 		return dup
+	case code.InitStruct:
+		return &InitStruct{}
+	case code.GetField:
+		return get_field
+	case code.SetField:
+		return set_field
+	case code.CallMethod:
+		return &CallMethod{}
 	case code.Return:
 		return ret
 	case code.XReturn:

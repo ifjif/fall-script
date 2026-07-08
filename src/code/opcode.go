@@ -45,6 +45,10 @@ const (
 	Closure_
 	CurClosure
 	Dup
+	InitStruct
+	GetField
+	SetField
+	CallMethod
 	Return
 	XReturn
 )

@@ -49,6 +49,10 @@ var definitions = map[OpCode]*Definition{
 	Closure_:    {"closure", []int{2, 1}},
 	CurClosure:  {"cur_closure", []int{}},
 	Dup:         {"dup", []int{}},
+	InitStruct:  {"init_struct", []int{2}},
+	GetField:    {"get_field", []int{}},
+	SetField:    {"set_field", []int{}},
+	CallMethod:  {"call_method", []int{1}},
 	Return:      {"return", []int{}},
 	XReturn:     {"xreturn", []int{}},
 }

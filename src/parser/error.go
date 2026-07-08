@@ -36,7 +36,7 @@ func (p *Parser) expectedIdentifierErr(expected Token) {
 
 func (p *Parser) expectedLeftSideValue(expr ast.Node) bool {
 	switch expr.(type) {
-	case *ast.IdentExpr, *ast.IndexExpr:
+	case *ast.IdentExpr, *ast.IndexExpr, *ast.MemberExpr:
 		return true
 	}
 	curToken := expr.GetToken()

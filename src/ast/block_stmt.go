@@ -2,7 +2,6 @@ package ast
 
 import (
 	"bytes"
-	"strings"
 
 	"zzc/fall-script/src/token"
 )
@@ -34,13 +33,11 @@ func (be *BlockStmt) String() string {
 
 	buf.WriteString("{\n")
 
-	strs := make([]string, len(be.Stmts))
-
-	for i, stmt := range be.Stmts {
-		strs[i] = stmt.String()
+	for _, stmt := range be.Stmts {
+		buf.WriteString(stmt.String())
+		buf.WriteString("\n")
 	}
 
-	buf.WriteString(strings.Join(strs, "\n"))
 	buf.WriteString("\n}")
 
 	return buf.String()

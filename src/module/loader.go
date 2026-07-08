@@ -213,6 +213,8 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	// fmt.Println(nProgram.String())
 
 	cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
+	cmp.SetStructAsts(program.Structs)
+	cmp.SetMethods(program.Methods)
 	cmp.Compile()
 	module := cmp.MainModule()
 	module.Name = file

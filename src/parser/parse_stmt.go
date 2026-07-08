@@ -14,6 +14,8 @@ func (p *Parser) parseStmt() StmtNode {
 		stmt = p.parseImportStmt()
 	case EXPORT:
 		stmt = p.parseExportStmt()
+	case STRUCT:
+		stmt = p.parseStructStmt()
 	case LET:
 		stmt = p.parseLetStmt()
 	case FOR:
@@ -58,6 +60,23 @@ func (p *Parser) parseExportStmt() StmtNode {
 		return nil
 	}
 	stmt.Declaration = declaration
+	return stmt
+}
+
+func (p *Parser) parseStructStmt() StmtNode {
+	stmt := &StructDeclStmt{Token: p.curToken}
+
+	if !p.expectPeek(IDENT) {
+		return nil
+	}
+
+	stmt.Name = p.getCurIdent()
+	if !p.expectPeek(LBRACE) {
+		return nil
+	}
+
+	stmt.Fields = p.parseFieldDeclareds(RBRACE)
+	p.structs[stmt.Name.Value] = stmt
 	return stmt
 }
 

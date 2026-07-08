@@ -32,6 +32,7 @@ const (
 	RBRACE    = "}"
 	COMMA     = ","
 	SHARP     = "#"
+	DOT       = "."
 
 	NULL     = "NULL"
 	INT      = "INT"
@@ -49,9 +50,11 @@ const (
 	DO       = "DO"
 	IMPORT   = "IMPORT"
 	EXPORT   = "EXPORT"
+	STRUCT   = "STRUCT"
 )
 
 var keyword = map[string]TokenType{
+	"struct": STRUCT,
 	"import": IMPORT,
 	"export": EXPORT,
 	"fn":     FUNCTION,

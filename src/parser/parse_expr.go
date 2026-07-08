@@ -95,6 +95,20 @@ func (p *Parser) parseGroupExpr() ExprNode {
 
 func (p *Parser) parseIdentExpr() ExprNode {
 	expr := &IdentExpr{Token: p.curToken, Value: p.curToken.Value}
+	if p.peekTypeIs(LBRACE) {
+		p.nextToken()
+		sl := p.parseStructLiteralExpr(expr)
+		return sl
+	}
+	return expr
+}
+
+func (p *Parser) parseStructLiteralExpr(tag *IdentExpr) *StructLiteralExpr {
+	expr := &StructLiteralExpr{Token: tag.GetToken(), Tag: tag}
+
+	elements := p.parseStructPairs(RBRACE)
+
+	expr.Elements = elements
 	return expr
 }
 
@@ -130,22 +144,57 @@ func (p *Parser) parseIndexExpr(left ExprNode) ExprNode {
 }
 
 func (p *Parser) parseFnExpr() ExprNode {
-	expr := &FnExpr{Token: p.curToken}
+	expr := &FnExpr{
+		Token:  p.curToken,
+		Params: []*IdentExpr{},
+	}
+	var method *MethodDeclExpr
+
+	if p.peekTypeIs(LPAREN) {
+		p.nextToken()
+		p.nextToken()
+
+		// struct
+		if p.curTypeIs(IDENT) && p.peekTypeIs(IDENT) {
+			method = &MethodDeclExpr{}
+			arg0 := p.parseIdentExpr().(*IdentExpr)
+			p.nextToken()
+			structName := p.parseIdentExpr().(*IdentExpr)
+
+			if !p.expectPeek(RPAREN) {
+				return nil
+			}
+
+			method.StructName = structName
+			expr.Params = append(expr.Params, arg0)
+			method.Fn = expr
+
+			if !p.peekTypeIs(IDENT) {
+				p.peekErr(IDENT)
+				return nil
+			}
+		} else {
+			expr.UnName = true
+		}
+	}
 
 	if p.peekTypeIs(IDENT) {
 		p.nextToken()
 		ident := p.parseIdentExpr().(*IdentExpr)
 		expr.Name = ident.Value
 		expr.Ident = ident
-	} else {
-		expr.UnName = true
 	}
 
-	if !p.expectPeek(LPAREN) {
+	if !expr.UnName && !p.expectPeek(LPAREN) {
 		return nil
 	}
 
-	expr.Params = p.parseFnParams(RPAREN)
+	if p.curTypeIs(LPAREN) {
+		p.nextToken()
+	}
+
+	params := p.parseFnParams(RPAREN)
+	expr.Params = append(expr.Params, params...)
 
 	if !p.expectPeek(LBRACE) {
 		return nil
@@ -153,6 +202,16 @@ func (p *Parser) parseFnExpr() ExprNode {
 
 	expr.Body = p.parseBlockStmt()
 
+	if method != nil {
+		structName := method.StructName.Value
+		m, ok := p.methods[structName]
+		if !ok {
+			m = make([]*MethodDeclExpr, 0)
+		}
+		m = append(m, method)
+		p.methods[structName] = m
+		return method
+	}
 	return expr
 }
 
@@ -297,12 +356,11 @@ func (p *Parser) parseHashPair() *Pair {
 func (p *Parser) parseFnParams(end TokenType) []*IdentExpr {
 	list := []*IdentExpr{}
 
-	if p.peekTypeIs(end) {
-		p.nextToken()
+	if p.curTypeIs(end) {
 		return list
 	}
 
-	if p.expectPeek(IDENT) {
+	if p.expectCur(IDENT) {
 		ident := p.parseIdentExpr().(*IdentExpr)
 		list = append(list, ident)
 	} else {
@@ -354,4 +412,13 @@ func (p *Parser) parseSliceExpr(start ExprNode) ExprNode {
 	}
 
 	return node
+}
+
+func (p *Parser) parseMemberExpr(left ExprNode) ExprNode {
+	expr := &MemberExpr{Token: p.curToken, Visitor: left}
+	precedences := p.curPrecedence()
+	p.nextToken()
+	expr.Member = p.parseExpr(precedences)
+
+	return expr
 }

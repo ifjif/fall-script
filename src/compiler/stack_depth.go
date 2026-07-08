@@ -85,6 +85,14 @@ func (c *Compiler) getStackDelta(op OpCode, operands []int) int {
 		return +1
 	case Dup:
 		return +1
+	case InitStruct:
+		return -(2 * operand)
+	case GetField:
+		return -1
+	case SetField:
+		return -2
+	case CallMethod:
+		return -(operand + 2)
 	case Return:
 		return 0
 	case XReturn:

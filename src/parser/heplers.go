@@ -1,8 +1,13 @@
 package parser
 
 import (
+	"zzc/fall-script/src/ast"
 	. "zzc/fall-script/src/token"
 )
+
+func (p *Parser) getCurIdent() *ast.IdentExpr {
+	return &ast.IdentExpr{Token: p.curToken, Value: p.curToken.Value}
+}
 
 func (p *Parser) curType() TokenType {
 	return p.curToken.Type

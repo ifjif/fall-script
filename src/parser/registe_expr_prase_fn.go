@@ -42,6 +42,7 @@ func (p *Parser) registeExprFn() {
 	p.registeInfixFn(OR, p.parseInfixExpr)
 	p.registeInfixFn(LPAREN, p.parseCallExpr)
 	p.registeInfixFn(LBRACKET, p.parseIndexExpr)
+	p.registeInfixFn(DOT, p.parseMemberExpr)
 }
 
 func (p *Parser) registePrefixFn(tokenType TokenType, fn prefixParseFn) {

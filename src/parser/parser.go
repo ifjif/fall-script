@@ -13,13 +13,17 @@ type Parser struct {
 	errors         []string
 	prefixParseFns map[TokenType]prefixParseFn
 	infixParseFns  map[TokenType]infixParseFn
+	methods        map[string][]*MethodDeclExpr
+	structs        map[string]*StructDeclStmt
 }
 
 func NewParser(input string) *Parser {
 	l := lexer.NewLexer(input)
 	p := &Parser{
-		l:      l,
-		errors: []string{},
+		l:       l,
+		errors:  []string{},
+		methods: map[string][]*MethodDeclExpr{},
+		structs: map[string]*StructDeclStmt{},
 	}
 
 	p.registeExprFn()
@@ -40,6 +44,8 @@ func (p *Parser) Parse() *Program {
 		}
 		p.nextToken()
 	}
+	program.Structs = p.structs
+	program.Methods = p.methods
 	return program
 }
 

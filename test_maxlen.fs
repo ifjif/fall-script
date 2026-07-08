@@ -3,6 +3,7 @@ fn maxLength(str) {
 
   let left = 0
   let max = 0
+  let startIdx = 0
 
   let length = len(str)
 
@@ -19,14 +20,13 @@ fn maxLength(str) {
     let currentLen = i - left + 1
     if (currentLen > max) {
        max = currentLen
+       startIdx = left
     }
   }
 
-  let s = str[left:left+max]
-
   puts(max)
-  puts(occur)
-  puts(s)
+  puts(occurred)
+  puts(str[startIdx:startIdx+max])
 }
 
 maxLength("abca")

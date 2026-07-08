@@ -1,0 +1,16 @@
+import {str3} from "xxx"
+struct str1 {
+  a:
+  b:
+}
+
+struct st2 {
+  str1
+  str3
+  c:
+}
+
+export str2
+// 导出的 str2需要展开记录，如内部有 组合，组合的ast也必须在其中
+// 本模块有，使用本模块的，没有从import中得到
+// 还需要导入 str2的直接方法

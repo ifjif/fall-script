@@ -7,7 +7,9 @@ import (
 )
 
 type Program struct {
-	Stmts []StmtNode
+	Stmts   []StmtNode
+	Structs map[string]*StructDeclStmt
+	Methods map[string][]*MethodDeclExpr
 }
 
 func (p *Program) String() string {
@@ -15,6 +17,7 @@ func (p *Program) String() string {
 
 	for _, s := range p.Stmts {
 		buf.WriteString(s.String())
+		buf.WriteString("\n")
 	}
 
 	return buf.String()

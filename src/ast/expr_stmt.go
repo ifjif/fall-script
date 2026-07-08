@@ -22,18 +22,23 @@ func (es *ExprStmt) String() string {
 }
 
 func (es *ExprStmt) SetAttributes(attrs []*AttributeExpr) {
-	fn, ok := es.Expr.(*FnExpr)
-	if !ok {
-		return
+	if fn, ok := es.Expr.(*FnExpr); ok {
+		fn.Attrs = attrs
 	}
-	fn.Attrs = attrs
+
+	if method, ok := es.Expr.(*MethodDeclExpr); ok {
+		method.Fn.Attrs = attrs
+	}
 }
 
 func (es *ExprStmt) GetAttributes() []*AttributeExpr {
-	fn, ok := es.Expr.(*FnExpr)
-	if !ok {
-		return nil
+	if fn, ok := es.Expr.(*FnExpr); ok {
+		return fn.Attrs
 	}
 
-	return fn.Attrs
+	if method, ok := es.Expr.(*MethodDeclExpr); ok {
+		return method.Fn.Attrs
+	}
+
+	return nil
 }

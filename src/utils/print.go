@@ -44,6 +44,30 @@ func printCompiledFunction(cf *object.CompiledFunction, indent string) {
 	fmt.Println(cf.Instructions.StringWithIndent(constAndInstIndent))
 }
 
+func printStructMeta(sm *object.StructMeta, indent string) {
+	fmt.Printf("%sstruct %s\n", indent, sm.Name)
+	childIndent := indent + "	"
+	fmt.Printf("%sfield count: %d\n", childIndent, sm.FieldCount)
+	printStructFields(sm.Fields, childIndent)
+	printStructMethods(sm.Methods, childIndent)
+}
+
+func printStructFields(fields map[string]*object.FieldInfo, indent string) {
+	fmt.Printf("%sfields:\n", indent)
+	childIndent := indent + "  "
+	for name, field := range fields {
+		fmt.Printf("%sname: %s index: %v isEmbed: %t\n", childIndent, name, field.Index, field.IsEmbed)
+	}
+}
+
+func printStructMethods(methods map[string]*object.MethodRef, indent string) {
+	fmt.Printf("%smethods:\n", indent)
+	childIndent := indent + "  "
+	for name, mr := range methods {
+		fmt.Printf("%sname: %s index: %d targetStructMeta: %d\n", childIndent, name, mr.Index, mr.TargetStructMeta)
+	}
+}
+
 func printConstants(consts []object.Object, indent string) {
 	childIndent := indent + "      "
 	for i, ct := range consts {
@@ -51,6 +75,8 @@ func printConstants(consts []object.Object, indent string) {
 		switch ct := ct.(type) {
 		case *object.CompiledFunction:
 			printCompiledFunction(ct, childIndent)
+		case *object.StructMeta:
+			printStructMeta(ct, childIndent)
 		default:
 			fmt.Printf("%s%s\n", childIndent, ct.Inspect())
 		}

@@ -16,6 +16,7 @@ const (
 	PREFIX      // - !
 	CALL        // fn()
 	INDEX       // array[index]
+	MEMBER      // a.b
 )
 
 var precedences = map[token.TokenType]Precedence{
@@ -34,6 +35,7 @@ var precedences = map[token.TokenType]Precedence{
 	token.SLASH:    PRODUCT,
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
+	token.DOT:      MEMBER,
 }
 
 func (p *Parser) curPrecedence() Precedence {

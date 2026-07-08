@@ -3,8 +3,8 @@ package compiler
 import (
 	"fmt"
 
+	"zzc/fall-script/src/ast"
 	. "zzc/fall-script/src/ast"
-	"zzc/fall-script/src/code"
 	. "zzc/fall-script/src/code"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/utils"
@@ -19,6 +19,9 @@ type Compiler struct {
 	scopeIndex  int
 	imports     []*object.ImportRef
 	exports     []*object.ExportRef
+	structAsts  map[string]*ast.StructDeclStmt
+	structs     map[string]*object.StructMeta
+	methods     map[string][]*ast.MethodDeclExpr
 	exportNames []string
 }
 
@@ -41,6 +44,14 @@ func NewCompiler(program Node, imports []*ImportStmt, exports []*ExportStmt, pst
 	return c
 }
 
+func (c *Compiler) SetStructAsts(structs map[string]*ast.StructDeclStmt) {
+	c.structAsts = structs
+}
+
+func (c *Compiler) SetMethods(methods map[string][]*ast.MethodDeclExpr) {
+	c.methods = methods
+}
+
 func (c *Compiler) defineExport(name string) *object.ExportRef {
 	idx := c.addStrConstant(name)
 	exp := &object.ExportRef{Name: idx, GlobalId: -1}
@@ -48,6 +59,9 @@ func (c *Compiler) defineExport(name string) *object.ExportRef {
 }
 
 func (c *Compiler) Compile() {
+	// struct
+	c.resolveStructs()
+
 	c.doCompile(c.program)
 	// 完善exports
 	c.resolveExports()
@@ -99,6 +113,10 @@ func (c *Compiler) doCompile(node Node) {
 		c.compileDoWhileStmt(node)
 	case *ReturnStmt:
 		c.compileReturnStmt(node)
+	case *StructDeclStmt:
+		c.compileStructDeclStmt(node)
+	case *StructLiteralExpr:
+		c.compileStructLieralExpr(node)
 	case *AssignExpr:
 		c.compileAssignExpr(node)
 	case *IntExpr:
@@ -125,13 +143,17 @@ func (c *Compiler) doCompile(node Node) {
 		c.compileIfExpr(node)
 	case *FnExpr:
 		c.compileFnExpr(node)
+	case *MethodDeclExpr:
+		c.compileMethodDeclExpr(node)
 	case *SliceExpr:
 		c.compileSliceExpr(node)
+	case *MemberExpr:
+		c.compileMemberExpr(node)
 	}
 }
 
 func (c *Compiler) compileNullExpr(expr *NullExpr) {
-	c.emit(code.Null_)
+	c.emit(Null_)
 }
 
 func (c *Compiler) compileProgram(stmts []StmtNode) {
@@ -139,8 +161,8 @@ func (c *Compiler) compileProgram(stmts []StmtNode) {
 		c.doCompile(stmt)
 	}
 
-	if !c.lastInstructionIs(code.Return) && !c.lastInstructionIs(code.XReturn) {
-		c.emit(code.Return)
+	if !c.lastInstructionIs(Return) && !c.lastInstructionIs(XReturn) {
+		c.emit(Return)
 	}
 }
 
@@ -212,12 +234,27 @@ func (c *Compiler) compileDoWhileStmt(stmt *DoWhileStmt) {
 
 func (c *Compiler) compileReturnStmt(stmt *ReturnStmt) {
 	if stmt.Value == nil {
-		c.emit(code.Return)
+		c.emit(Return)
 		return
 	}
 
 	c.doCompile(stmt.Value)
-	c.emit(code.XReturn)
+	c.emit(XReturn)
+}
+
+func (c *Compiler) compileStructDeclStmt(stmt *StructDeclStmt) {
+	// skip
+}
+
+func (c *Compiler) compileStructLieralExpr(expr *StructLiteralExpr) {
+	c.compileIdentExpr(expr.Tag)
+	count := len(expr.Elements)
+	for _, elem := range expr.Elements {
+		c.emit(Const, c.addStrConstant(elem.Key.Value))
+		c.doCompile(elem.Value)
+	}
+
+	c.emit(InitStruct, count)
 }
 
 func (c *Compiler) compileAssignExpr(expr *AssignExpr) {
@@ -236,7 +273,13 @@ func (c *Compiler) compileAssignExpr(expr *AssignExpr) {
 		c.doCompile(left.Left)
 		c.doCompile(left.Index)
 		c.doCompile(expr.Value)
-		c.emit(code.SetIndex)
+		c.emit(SetIndex)
+	case *MemberExpr:
+		c.doCompile(left.Visitor)
+		member := left.Member.(*ast.IdentExpr)
+		c.emit(Const, c.addStrConstant(member.Value))
+		c.doCompile(expr.Value)
+		c.emit(SetField)
 	}
 }
 
@@ -371,13 +414,24 @@ func (c *Compiler) compileIndexExpr(expr *IndexExpr) {
 	}
 }
 
+// [strct][a]
 func (c *Compiler) compileCallExpr(expr *CallExpr) {
-	c.doCompile(expr.Fn)
+	fn := expr.Fn
+	opcode := Call
+	ma, ok := fn.(*ast.MemberExpr)
+	if ok {
+		c.doCompile(ma.Visitor)
+		me := ma.Member.(*ast.IdentExpr)
+		c.emit(Const, c.addStrConstant(me.Value))
+		opcode = CallMethod
+	} else {
+		c.doCompile(fn)
+	}
 	for _, arg := range expr.Args {
 		c.doCompile(arg)
 	}
 
-	c.emit(Call, len(expr.Args))
+	c.emit(opcode, len(expr.Args))
 }
 
 func (c *Compiler) compileIfExpr(expr *IfExpr) {
@@ -435,11 +489,11 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	}
 
 	c.doCompile(expr.Body)
-	if c.lastInstructionIs(code.Pop) {
+	if c.lastInstructionIs(Pop) {
 		c.replaceLastPopWithXReturn()
 	}
-	if !c.lastInstructionIs(code.XReturn) && !c.lastInstructionIs(code.Return) {
-		c.emit(code.Return)
+	if !c.lastInstructionIs(XReturn) && !c.lastInstructionIs(Return) {
+		c.emit(Return)
 	}
 
 	consts := c.CurrentConstant()
@@ -461,11 +515,11 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 	for _, sym := range freeTable {
 		switch sym.Scope {
 		case LOCAL:
-			c.emit(code.GetLocal, sym.Pos)
-			c.emit(code.NewBoxLocal, sym.Pos)
-			c.emit(code.GetLocal, sym.Pos)
+			c.emit(GetLocal, sym.Pos)
+			c.emit(NewBoxLocal, sym.Pos)
+			c.emit(GetLocal, sym.Pos)
 		case FREE:
-			c.emit(code.GetFreeRaw, sym.Pos)
+			c.emit(GetFreeRaw, sym.Pos)
 		}
 	}
 
@@ -475,6 +529,10 @@ func (c *Compiler) compileFnExpr(expr *FnExpr) {
 		c.emit(Dup)
 		c.storeSymbol(mSym)
 	}
+}
+
+func (c *Compiler) compileMethodDeclExpr(expr *MethodDeclExpr) {
+	// skip
 }
 
 func (c *Compiler) compileSliceExpr(sliceExpr *SliceExpr) {
@@ -506,4 +564,12 @@ func (c *Compiler) compileSliceExpr(sliceExpr *SliceExpr) {
 	} else {
 		c.doCompile(capc)
 	}
+}
+
+func (c *Compiler) compileMemberExpr(expr *MemberExpr) {
+	c.doCompile(expr.Visitor)
+	member := expr.Member.(*ast.IdentExpr)
+	c.emit(Const, c.addStrConstant(member.Value))
+
+	c.emit(GetField)
 }

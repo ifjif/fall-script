@@ -31,6 +31,8 @@ let fn abc return true false if else
 #
 import
 export
+struct
+a.b
 `,
 			[]Token{
 				{Type: PLUS, Value: "+", Line: 1, Col: 1},
@@ -75,7 +77,11 @@ export
 				{Type: SHARP, Value: "#", Line: 15, Col: 1},
 				{Type: IMPORT, Value: "import", Line: 16, Col: 1},
 				{Type: EXPORT, Value: "export", Line: 17, Col: 1},
-				{Type: EOF, Value: "", Line: 18, Col: 1},
+				{Type: STRUCT, Value: "struct", Line: 18, Col: 1},
+				{Type: IDENT, Value: "a", Line: 19, Col: 1},
+				{Type: DOT, Value: ".", Line: 19, Col: 2},
+				{Type: IDENT, Value: "b", Line: 19, Col: 3},
+				{Type: EOF, Value: "", Line: 20, Col: 1},
 			},
 		},
 	}
