@@ -418,6 +418,7 @@ func (p *Parser) parseMemberExpr(left ExprNode) ExprNode {
 	expr := &MemberExpr{Token: p.curToken, Visitor: left}
 	precedences := p.curPrecedence()
 	p.nextToken()
+	// todo 可以是 Ident或int
 	expr.Member = p.parseExpr(precedences)
 
 	return expr

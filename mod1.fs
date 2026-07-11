@@ -27,3 +27,14 @@ puts(str1, str2, str)
 puts(byte(20))
 
 export d
+
+/*
+ * 
+ * 1221
+ * [1, 2, 3, 4]
+ * 4
+ * hello 
+ * world
+ * hello world
+ *
+ */

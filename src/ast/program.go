@@ -7,9 +7,12 @@ import (
 )
 
 type Program struct {
-	Stmts   []StmtNode
-	Structs map[string]*StructDeclStmt
-	Methods map[string][]*MethodDeclExpr
+	Stmts       []StmtNode
+	Structs     map[string]*StructDeclStmt
+	Methods     map[string][]*MethodDeclExpr
+	Imports     []*ImportStmt
+	Exports     []*ExportStmt
+	PromotedFns []string
 }
 
 func (p *Program) String() string {

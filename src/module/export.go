@@ -30,14 +30,16 @@ const (
 	OriginReExport
 )
 
-// todo 自定义序列化 AST
+// 自定义序列化 AST
 type ExportMeta struct {
-	Name      string
-	Ast       ast.Node
-	Source    string
-	ExportIdx int
-	Origin    ExportOrigin
-	Imported  string
+	Name       string
+	Ast        ast.Node
+	Source     string
+	ExportIdx  int
+	Origin     ExportOrigin
+	Imported   string
+	Methods    []string // struct ASt
+	FieldTotal int      // struct AST
 }
 
 func NewExportMeta(name string, ast ast.Node, source string, exportIdx int) *ExportMeta {
@@ -163,8 +165,12 @@ func resolveExports(l *Loader, file string, er ExportMetasRegister) ExportMetas 
 func resolveExports2(l *Loader, file string, program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt, er ExportMetasRegister) ExportMetas {
 	source := file
 
+	structs := program.Structs
+	// methods := program.Methods
+
 	exports2 := ExportMetas{}
 	ident := map[string]int{}
+	exportStruct := map[string]*ast.StructDeclStmt{}
 
 	for i, exp := range exports {
 		node := exp.Declaration
@@ -179,6 +185,8 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 				name = node.Name
 			}
 			astNode = node
+		case *ast.StructDeclStmt:
+			exportStruct[node.Name.Value] = node
 		case *ast.IdentExpr:
 			ident[node.Value] = i
 		}
@@ -215,21 +223,54 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 					delete(ident, expr.Name)
 				}
 			}
+		case *ast.StructDeclStmt:
+			exportStruct[stmt.Name.Value] = stmt
+			delete(ident, stmt.Name.Value)
 		}
 	}
 
 	// 注册
 	er[source] = exports2
 
+	importStruct := map[string]bool{}
+
+	// 处理exportStruct, 收集组合了 import中的
+	for _, stru := range exportStruct {
+		fields := stru.Fields
+		for _, fields := range fields {
+			fname := fields.Name.Value
+			if fields.IsEmbed { // 组合，在本模块中找，没有则是在import中，进行记录
+				if _, ok := structs[fname]; !ok {
+					importStruct[fname] = true
+				}
+			}
+		}
+	}
+
+	importStructMeta := map[string]*ExportMeta{}
 	// 还有，从imports中找
-	if len(ident) > 0 {
+	// 1: ident 10:importStruct
+	if len(ident) > 0 || len(importStruct) > 0 {
+		kind := 0
 		for _, imp := range imports {
 			sr := ResolveImportPath(source, imp.Source)
 			for _, spe := range imp.Specifiers {
+				// ident
 				idx, ok := ident[spe.Local]
-				if !ok {
+				if ok {
+					kind = kind | 1
+				}
+				// importStruct
+				_, ok = importStruct[spe.Local]
+				if ok {
+					kind = kind | 2
+				}
+
+				// all not
+				if kind == 0 {
 					continue
 				}
+
 				ep2, ok := er[sr]
 				if !ok {
 					ep2 = resolveExports(l, sr, er)
@@ -240,11 +281,21 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 					panic(msg)
 				}
 				nep := NewExportMeta(spe.Local, ep.Ast, ep.Source, idx)
-				nep.SetReExportInfo(ep.Name)
-				exports2[spe.Local] = nep
+
+				if (kind & 1) == 1 {
+					nep.SetReExportInfo(ep.Name)
+					exports2[spe.Local] = nep
+				}
+				if (kind & 2) == 2 {
+					importStructMeta[spe.Local] = nep
+				}
 			}
 		}
 	}
+
+	// 处理 export struct, 得到字段总数，收集直接方法
+	//for name, struc := range exportStruct {
+	//}
 
 	return exports2
 }

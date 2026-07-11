@@ -33,7 +33,7 @@ func (ce *CallMethod) Execute(frame *rt.Frame) {
 	mr, ok := si.StructMeta.Methods[name.Value]
 
 	if !ok {
-		panic("not exist field xx")
+		panic("not exist method xx")
 	}
 
 	if mr.TargetStructMeta != -1 {
@@ -52,6 +52,7 @@ func (ce *CallMethod) Execute(frame *rt.Frame) {
 			StructMeta: structMeta,
 		}
 		arg1 = offsetInstance
+		mr = structMeta.Methods[name.Value]
 	}
 
 	fn := frame.GetGlobal(mr.Index)

@@ -2,6 +2,7 @@ package module
 
 import (
 	"encoding/binary"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,9 +12,11 @@ import (
 	binarychunck "zzc/fall-script/src/binary_chunck"
 	"zzc/fall-script/src/builtin/vmb"
 	"zzc/fall-script/src/compiler"
+	"zzc/fall-script/src/ir"
 	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/parser"
+	"zzc/fall-script/src/semantic"
 	"zzc/fall-script/src/utils"
 )
 
@@ -34,7 +37,7 @@ const (
 )
 
 type Loader struct {
-	rootSt         *compiler.SymbolTable
+	globalSymbol   *ir.SymbolTable
 	sourceSuffix   string
 	bytecodeSuffix string
 	metaSuffix     string
@@ -43,13 +46,13 @@ type Loader struct {
 }
 
 func NewLoader() *Loader {
-	st := compiler.NewSymbolTable()
+	globalSt := ir.NewSymbolTable()
 	for i, fn := range vmb.Builtins {
-		st.DefineBuiltin(i, fn.Name)
+		globalSt.DefineBuiltin(i, fn.Name)
 	}
 
 	loader := &Loader{
-		rootSt:         st,
+		globalSymbol:   globalSt,
 		sourceSuffix:   SourceSuffix,
 		bytecodeSuffix: BytecodeSuffix,
 		metaSuffix:     MetaSuffix,
@@ -196,6 +199,7 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	program := l.parse(data)
 
 	env := object.NewEnvironment()
+	// imports, exports
 	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
 	//	fmt.Println(env.Inspect())
 	//	fmt.Println("代码块：")
@@ -209,13 +213,28 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 	//		fmt.Println(exp.Declaration.String())
 	//	}
 	nProgram := macro.ExpandMacros(program, env)
+	np := nProgram.(*ast.Program)
 	// fmt.Println("展开后的代码块：")
 	// fmt.Println(nProgram.String())
+	np.Imports = imports
+	np.Exports = exports
 
-	cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
-	cmp.SetStructAsts(program.Structs)
-	cmp.SetMethods(program.Methods)
-	cmp.Compile()
+	// 语义分析
+	analyzer := semantic.NewAnalyzer(l.globalSymbol)
+	ip := analyzer.Analyze(np)
+	if len(analyzer.Errors()) > 0 {
+		fmt.Println(strings.Join(analyzer.Errors(), "\n"))
+		fmt.Println()
+	}
+	// fmt.Println(ip.String())
+
+	// cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
+	// cmp.SetStructAsts(program.Structs)
+	// cmp.SetMethods(program.Methods)
+	// cmp.SetPromotedFns(program.PromotedFns)
+	// cmp.Compile()
+	cmp := compiler.NewCompiler(ip)
+	cmp.Compiler()
 	module := cmp.MainModule()
 	module.Name = file
 	utils.PrintModule(module, "")
@@ -240,8 +259,21 @@ func (l *Loader) doBuild(data []byte, file string) {
 	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
 	nProgram := macro.ExpandMacros(program, env)
 
-	cmp := compiler.NewCompiler(nProgram, imports, exports, l.rootSt)
-	cmp.Compile()
+	np := nProgram.(*ast.Program)
+	np.Imports = imports
+	np.Exports = exports
+
+	// 语义分析
+	analyzer := semantic.NewAnalyzer(l.globalSymbol)
+	ip := analyzer.Analyze(np)
+	if len(analyzer.Errors()) > 0 {
+		err := strings.Join(analyzer.Errors(), "\n")
+		panic(err)
+	}
+
+	cmp := compiler.NewCompiler(ip)
+	cmp.Compiler()
+
 	module := cmp.MainModule()
 	module.Name = file
 

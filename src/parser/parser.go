@@ -15,15 +15,17 @@ type Parser struct {
 	infixParseFns  map[TokenType]infixParseFn
 	methods        map[string][]*MethodDeclExpr
 	structs        map[string]*StructDeclStmt
+	promotedFns    []string
 }
 
 func NewParser(input string) *Parser {
 	l := lexer.NewLexer(input)
 	p := &Parser{
-		l:       l,
-		errors:  []string{},
-		methods: map[string][]*MethodDeclExpr{},
-		structs: map[string]*StructDeclStmt{},
+		l:           l,
+		errors:      []string{},
+		methods:     map[string][]*MethodDeclExpr{},
+		structs:     map[string]*StructDeclStmt{},
+		promotedFns: []string{},
 	}
 
 	p.registeExprFn()
@@ -46,6 +48,7 @@ func (p *Parser) Parse() *Program {
 	}
 	program.Structs = p.structs
 	program.Methods = p.methods
+	program.PromotedFns = p.promotedFns
 	return program
 }
 

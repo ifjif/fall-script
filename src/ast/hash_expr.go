@@ -7,6 +7,25 @@ import (
 	"zzc/fall-script/src/token"
 )
 
+/*
+*
+let a : i8 =
+
+	struct {
+		abc
+		a:i8
+
+b:bool
+}
+
+	{
+		a:12,
+		b:23,
+	}
+
+*
+*/
+
 type Pair struct {
 	Key   ExprNode
 	Value ExprNode

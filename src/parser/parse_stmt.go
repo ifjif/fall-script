@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"zzc/fall-script/src/ast"
 	. "zzc/fall-script/src/ast"
 	"zzc/fall-script/src/token"
 	. "zzc/fall-script/src/token"
@@ -213,6 +214,9 @@ func (p *Parser) parseExprStmt() StmtNode {
 
 	if p.peekTypeIs(SEMICOLON) {
 		p.nextToken()
+	}
+	if fn, ok := stmt.Expr.(*ast.FnExpr); ok {
+		p.promotedFns = append(p.promotedFns, fn.Ident.Value)
 	}
 	return stmt
 }
