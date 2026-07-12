@@ -15,7 +15,11 @@ type FieldInfo struct {
 	Children map[string]*FieldInfo
 }
 
-func (a *Analyzer) analyzeStruct(structDeclStmts map[string]*ast.StructDeclStmt, methodDeclExprs map[string][]*ast.MethodDeclExpr) []ir.Stmt {
+func (a *Analyzer) analyzeStruct(
+	structDeclStmts map[string]*ast.StructDeclStmt,
+	methodDeclExprs map[string][]*ast.MethodDeclExpr,
+	importMetas map[string]*ir.ImportMeta,
+) []ir.Stmt {
 	ses := []ir.Stmt{}
 
 	for sname, structDeclStmt := range structDeclStmts {
@@ -27,7 +31,7 @@ func (a *Analyzer) analyzeStruct(structDeclStmts map[string]*ast.StructDeclStmt,
 			Name: sym,
 		}
 
-		count, fis := CalcStructFields(structDeclStmts, structDeclStmt, 0)
+		count, fis := CalcStructFields(importMetas, structDeclStmts, structDeclStmt, 0)
 
 		fmt.Printf("%s 的字段(%d):\n", sname, count)
 		printFields(fis)
@@ -45,9 +49,9 @@ func (a *Analyzer) analyzeStruct(structDeclStmts map[string]*ast.StructDeclStmt,
 			}
 		}
 
-		// 进行 一级平铺, 它自己级 一级组合
+		// 进行 一级平铺, 它自己 及 一级组合
 		nfis := make(map[string]*object.FieldInfo)
-
+		comps := make(map[string]*FieldInfo)
 		for name, f := range fis {
 			ff := &object.FieldInfo{
 				Name:    f.Name,
@@ -61,20 +65,50 @@ func (a *Analyzer) analyzeStruct(structDeclStmts map[string]*ast.StructDeclStmt,
 				}
 				ff.TargetStructMeta = sym.Pos
 				// 方法
-				methods := methodDeclExprs[f.Name]
-				for _, method := range methods {
-					mname := method.Fn.Name
-					// 不存在，进行promoted
-					if _, ok := mis[mname]; !ok {
-						mis[mname] = &object.MethodRef{
-							TargetStructMeta: sym.Pos,
-							Name:             mname,
-							Index:            -1,
+				if methods, ok := methodDeclExprs[f.Name]; ok {
+					for _, method := range methods {
+						mname := method.Fn.Name
+						// 不存在，进行promoted
+						if _, ok := mis[mname]; !ok {
+							mis[mname] = &object.MethodRef{
+								TargetStructMeta: sym.Pos,
+								Name:             mname,
+								Index:            -1,
+							}
 						}
 					}
 				}
+				// meta 中
+				if importMeta, ok := importMetas[f.Name]; ok {
+					for _, mname := range importMeta.Methods {
+						if _, ok := mis[mname]; !ok {
+							mis[mname] = &object.MethodRef{
+								TargetStructMeta: sym.Pos,
+								Name:             mname,
+								Index:            -1,
+							}
+						}
+					}
+				}
+				comps[name] = f
 			}
 			nfis[name] = ff
+		}
+
+		// 一级组合，字段 promoted
+		for _, f := range comps {
+			for name, ff := range f.Children {
+				_, ok := nfis[name]
+				// 不存在，并且不是 组合
+				if !ok && !ff.IsEmbed {
+					fff := &object.FieldInfo{
+						Name:    ff.Name,
+						Index:   ff.Index,
+						IsEmbed: ff.IsEmbed,
+					}
+					nfis[name] = fff
+				}
+			}
 		}
 
 		fmt.Println()
@@ -93,7 +127,7 @@ func (a *Analyzer) analyzeStruct(structDeclStmts map[string]*ast.StructDeclStmt,
 	return ses
 }
 
-func CalcStructFields(asts map[string]*ast.StructDeclStmt, structAst *ast.StructDeclStmt, offset int) (int, map[string]*FieldInfo) {
+func CalcStructFields(importMetas map[string]*ir.ImportMeta, asts map[string]*ast.StructDeclStmt, structAst *ast.StructDeclStmt, offset int) (int, map[string]*FieldInfo) {
 	fis := make(map[string]*FieldInfo)
 	fields := structAst.Fields
 	for _, field := range fields {
@@ -105,13 +139,39 @@ func CalcStructFields(asts map[string]*ast.StructDeclStmt, structAst *ast.Struct
 
 		fis[fi.Name] = fi
 
-		if field.IsEmbed {
-			st := asts[field.Name.Value]
-			no, ns := CalcStructFields(asts, st, offset)
+		if !field.IsEmbed {
+			offset++
+			continue
+		}
+		st, ok := asts[field.Name.Value]
+		if ok {
+			no, ns := CalcStructFields(importMetas, asts, st, offset)
 			offset = no
 			fi.Children = ns
-		} else {
-			offset++
+			continue
+		}
+		// import-meta中
+		sm, ok := importMetas[field.Name.Value]
+		if ok {
+			curOffset := offset
+			offset += sm.FieldTotal
+			offsets := sm.Fields
+			// 设计children
+			children := map[string]*FieldInfo{}
+			// todo , 判断是否是 struct
+			sds := sm.Ast.(*ast.StructDeclStmt)
+			// sm总字段 = sm.FieldTotal
+			// sm直接字段 = len(sds.fields)
+			// sm所有字段offset = sm.Fields
+			for i, fd := range sds.Fields {
+				name := fd.Name.Value
+				children[name] = &FieldInfo{
+					Name:    name,
+					IsEmbed: fd.IsEmbed,
+					Index:   curOffset + offsets[i],
+				}
+			}
+			fi.Children = children
 		}
 
 	}

@@ -1,11 +1,11 @@
 package module
 
 import (
-	"fmt"
 	"path/filepath"
 	"sort"
 
 	"zzc/fall-script/src/ast"
+	"zzc/fall-script/src/ir"
 	"zzc/fall-script/src/macro"
 	"zzc/fall-script/src/object"
 )
@@ -17,7 +17,6 @@ func CollectImportsAndExports(program *ast.Program) (imports []*ast.ImportStmt, 
 	nStmts := make([]ast.StmtNode, 0)
 	imports = make([]*ast.ImportStmt, 0)
 	exports = make([]*ast.ExportStmt, 0)
-	structs := make([]*ast.StructDeclStmt, 0)
 	for _, stmt := range program.Stmts {
 		switch stmt := stmt.(type) {
 		case *ast.ImportStmt:
@@ -33,16 +32,8 @@ func CollectImportsAndExports(program *ast.Program) (imports []*ast.ImportStmt, 
 				nStmts = append(nStmts, declaration.(ast.StmtNode))
 			}
 		default:
-			if sd, ok := stmt.(*ast.StructDeclStmt); ok {
-				structs = append(structs, sd)
-			}
 			nStmts = append(nStmts, stmt)
 		}
-	}
-
-	fmt.Println("当前模块收集到的structs")
-	for _, st := range structs {
-		fmt.Println(st.String())
 	}
 
 	program.Stmts = nStmts
@@ -71,12 +62,14 @@ func ResolveImportsAndExports(l *Loader, source string, program *ast.Program, im
 	return imp, exp
 }
 
-func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *object.Environment) (program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt) {
+func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *object.Environment) (program *ast.Program, imports []*ast.ImportStmt, exports []*ast.ExportStmt, importMetas map[string]*ir.ImportMeta) {
 	source := file
 	program = p
 	imports, exports = CollectImportsAndExports(program)
 
 	imports2, exports2 := ResolveImportsAndExports(l, source, program, imports, exports)
+
+	importMetas = make(map[string]*ir.ImportMeta)
 
 	importsMacroDefine := map[int][]int{}
 	for _, imp := range imports2 {
@@ -90,6 +83,12 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 			}
 			importD = append(importD, imp.NameIdx)
 			importsMacroDefine[importIdx] = importD
+		}
+		importMetas[imp.Name] = &ir.ImportMeta{
+			Ast:        node,
+			FieldTotal: imp.FieldTotal,
+			Methods:    imp.Methods,
+			Fields:     imp.Fields,
 		}
 	}
 
@@ -123,5 +122,5 @@ func ResolveMacrosFromProgram(l *Loader, p *ast.Program, file string, env *objec
 	macro.DefineMacros(program, env)
 	//	fmt.Println("找宏结束===============================")
 
-	return program, imports, exports
+	return program, imports, exports, importMetas
 }

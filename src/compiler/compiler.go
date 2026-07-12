@@ -11,6 +11,7 @@ type Compiler struct {
 	scopeIndex int
 	imports    []*object.ImportRef
 	exports    []*object.ExportRef
+	structs    []*object.StructMeta
 	program    *ir.Program
 }
 
@@ -21,6 +22,7 @@ func NewCompiler(program *ir.Program) *Compiler {
 		scopes:  []*Scope{mainScope},
 		imports: []*object.ImportRef{},
 		exports: []*object.ExportRef{},
+		structs: []*object.StructMeta{},
 	}
 
 	return c
@@ -42,6 +44,7 @@ func (c *Compiler) MainModule() *object.Module {
 		Name:      "",
 		Imports:   c.imports,
 		Exports:   c.exports,
+		Structs:   c.structs,
 		Cf:        cf,
 		GlobalNum: c.program.Globals,
 	}

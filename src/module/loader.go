@@ -200,7 +200,7 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 
 	env := object.NewEnvironment()
 	// imports, exports
-	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
+	program, imports, exports, importMetas := ResolveMacrosFromProgram(l, program, file, env)
 	//	fmt.Println(env.Inspect())
 	//	fmt.Println("代码块：")
 	//	fmt.Println(program.String())
@@ -221,7 +221,7 @@ func (l *Loader) LoadText(data []byte, file string) *object.Module {
 
 	// 语义分析
 	analyzer := semantic.NewAnalyzer(l.globalSymbol)
-	ip := analyzer.Analyze(np)
+	ip := analyzer.Analyze(np, importMetas)
 	if len(analyzer.Errors()) > 0 {
 		fmt.Println(strings.Join(analyzer.Errors(), "\n"))
 		fmt.Println()
@@ -256,7 +256,7 @@ func (l *Loader) doBuild(data []byte, file string) {
 	program := l.parse(data)
 
 	env := object.NewEnvironment()
-	program, imports, exports := ResolveMacrosFromProgram(l, program, file, env)
+	program, imports, exports, importMetas := ResolveMacrosFromProgram(l, program, file, env)
 	nProgram := macro.ExpandMacros(program, env)
 
 	np := nProgram.(*ast.Program)
@@ -265,7 +265,7 @@ func (l *Loader) doBuild(data []byte, file string) {
 
 	// 语义分析
 	analyzer := semantic.NewAnalyzer(l.globalSymbol)
-	ip := analyzer.Analyze(np)
+	ip := analyzer.Analyze(np, importMetas)
 	if len(analyzer.Errors()) > 0 {
 		err := strings.Join(analyzer.Errors(), "\n")
 		panic(err)

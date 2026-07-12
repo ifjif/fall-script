@@ -23,13 +23,13 @@ func (a *Analyzer) Errors() []string {
 	return a.errors
 }
 
-func (a *Analyzer) Analyze(program *ast.Program) *ir.Program {
+func (a *Analyzer) Analyze(program *ast.Program, importMetas map[string]*ir.ImportMeta) *ir.Program {
 	irStmts := []ir.Stmt{}
 	// 处理 import
 	ips := a.analyzeImports(program.Imports)
 	irStmts = append(irStmts, ips...)
 	// 处理struct
-	sds := a.analyzeStruct(program.Structs, program.Methods)
+	sds := a.analyzeStruct(program.Structs, program.Methods, importMetas)
 	irStmts = append(irStmts, sds...)
 
 	// 全局函数 提前定义, 初始还是按顺序进行

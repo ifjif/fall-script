@@ -89,6 +89,10 @@ func (fv *FsVM) load(mo *object.Module) *object.CompiledModule {
 		Exports: exports,
 		Status:  object.Uninitialized,
 	}
+	// 为所有 struct设置 module
+	for _, st := range mo.Structs {
+		st.OwnerModule = module
+	}
 	fv.moduleRegister[mo.Name] = module
 
 	return module

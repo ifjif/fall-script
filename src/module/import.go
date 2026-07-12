@@ -2,15 +2,19 @@ package module
 
 import (
 	"fmt"
+	"strings"
 
 	"zzc/fall-script/src/ast"
 )
 
 type ImportMeta struct {
-	Name      string
-	Ast       ast.Node
-	ImportIdx int
-	NameIdx   int
+	Name       string
+	Ast        ast.Node
+	ImportIdx  int
+	NameIdx    int
+	FieldTotal int      // struct 特有
+	Methods    []string // struct 特有
+	Fields     []int    // struct AST 所有字段的offset
 }
 
 func NewImport2(name string, ast ast.Node, importIdx, nameIdx int) *ImportMeta {
@@ -62,39 +66,48 @@ func ResolveImports(l *Loader, file string, imports []*ast.ImportStmt, er Export
 			ep := LookupExport(eps, spe.Imported, source)
 			ResolveReExport(l, source, ep, er)
 			ip := NewImport2(spe.Local, ep.Ast, i, k)
+			ip.FieldTotal = ep.FieldTotal
+			ip.Methods = ep.Methods
+			ip.Fields = ep.Fields
 			import2s = append(import2s, ip)
 		}
 	}
 
-	//	fmt.Println("Imports: ")
-	//	for _, ip := range import2s {
-	//		fmt.Printf("  name: %s\n", ip.Name)
-	//		fmt.Printf("  import_idx: %d\n", ip.ImportIdx)
-	//		fmt.Printf("  name_idx: %d\n", ip.NameIdx)
-	//		fmt.Printf("  node: %q\n", ip.Ast.String())
-	//		fmt.Println("")
-	//	}
-	//
-	//	fmt.Println()
-	//
-	//	for name, ep := range er {
-	//		fmt.Println(name)
-	//		fmt.Println("Exports:")
-	//		for n, ee := range ep {
-	//			fmt.Printf("  name: %s\n", n)
-	//			fmt.Printf("  export_idx: %d\n", ee.ExportIdx)
-	//			fmt.Printf("  origin: %d\n", ee.Origin)
-	//			fmt.Printf("  source: %s\n", ee.Source)
-	//			fmt.Printf("  imported: %s\n", ee.Imported)
-	//			ast := ""
-	//			if ee.Ast != nil {
-	//				ast = ee.Ast.String()
-	//			}
-	//			fmt.Printf("  node: %s\n", ast)
-	//			fmt.Println()
-	//		}
-	//		fmt.Println()
-	//	}
+	fmt.Println("Imports: ")
+	for _, ip := range import2s {
+		fmt.Printf("  name: %s\n", ip.Name)
+		fmt.Printf("  import_idx: %d\n", ip.ImportIdx)
+		fmt.Printf("  name_idx: %d\n", ip.NameIdx)
+		fmt.Printf("  field_total: %d\n", ip.FieldTotal)
+		fmt.Printf("  fields: %v\n", ip.Fields)
+		fmt.Printf("  methods: %s\n", strings.Join(ip.Methods, ","))
+		fmt.Printf("  node: %q\n", ip.Ast.String())
+		fmt.Println("")
+	}
+
+	fmt.Println()
+
+	for name, ep := range er {
+		fmt.Println(name)
+		fmt.Println("Exports:")
+		for n, ee := range ep {
+			fmt.Printf("  name: %s\n", n)
+			fmt.Printf("  export_idx: %d\n", ee.ExportIdx)
+			fmt.Printf("  origin: %d\n", ee.Origin)
+			fmt.Printf("  source: %s\n", ee.Source)
+			fmt.Printf("  imported: %s\n", ee.Imported)
+			fmt.Printf("  field_total: %d\n", ee.FieldTotal)
+			fmt.Printf("  fields: %v\n", ee.Fields)
+			fmt.Printf("  methods: %s\n", strings.Join(ee.Methods, ","))
+			ast := ""
+			if ee.Ast != nil {
+				ast = ee.Ast.String()
+			}
+			fmt.Printf("  node: %s\n", ast)
+			fmt.Println()
+		}
+		fmt.Println()
+	}
 
 	return import2s
 }

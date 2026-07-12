@@ -34,6 +34,7 @@ let st2 = St2 {
   c:7
 }
 
+puts(st2.d)
 puts(st1.a, st2.a, st2.St1.a)
 
 st2.a = 55

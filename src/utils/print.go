@@ -56,7 +56,7 @@ func printStructFields(fields map[string]*object.FieldInfo, indent string) {
 	fmt.Printf("%sfields:\n", indent)
 	childIndent := indent + "  "
 	for name, field := range fields {
-		fmt.Printf("%sname: %s index: %v isEmbed: %t\n", childIndent, name, field.Index, field.IsEmbed)
+		fmt.Printf("%sname: %s index: %v isEmbed: %t targetStructMeta: %d\n", childIndent, name, field.Index, field.IsEmbed, field.TargetStructMeta)
 	}
 }
 

@@ -1,6 +1,8 @@
 package reference
 
 import (
+	"errors"
+
 	"zzc/fall-script/src/instructions/base"
 	"zzc/fall-script/src/object"
 	"zzc/fall-script/src/vm/rt"
@@ -30,16 +32,23 @@ func (ce *CallMethod) Execute(frame *rt.Frame) {
 		panic("only supported string name")
 	}
 
-	mr, ok := si.StructMeta.Methods[name.Value]
+	targetStructMeta := si.StructMeta
+	mr, ok := targetStructMeta.Methods[name.Value]
 
 	if !ok {
 		panic("not exist method xx")
 	}
 
+	var fn object.Object
 	if mr.TargetStructMeta != -1 {
-		meta := frame.GetGlobal(mr.TargetStructMeta)
-		// todo 可能是 global
-		structMeta, ok := meta.(*object.StructMeta)
+		structMeta, err := base.GetTargetStructMeta(frame, si.StructMeta, mr.TargetStructMeta)
+		if errors.Is(err, base.ErrAwaitModuleInitialization) {
+			return
+		}
+		if err != nil {
+			panic(err)
+		}
+
 		sname := structMeta.Name
 		// 找 offset
 		field, ok := si.StructMeta.Fields[sname]
@@ -53,9 +62,11 @@ func (ce *CallMethod) Execute(frame *rt.Frame) {
 		}
 		arg1 = offsetInstance
 		mr = structMeta.Methods[name.Value]
+		targetStructMeta = structMeta
 	}
 
-	fn := frame.GetGlobal(mr.Index)
+	fn = targetStructMeta.OwnerModule.Globals[mr.Index]
+
 	closure, ok := fn.(*object.Closure)
 	if !ok {
 		panic("not method xxxx")

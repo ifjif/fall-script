@@ -38,8 +38,9 @@ type ExportMeta struct {
 	ExportIdx  int
 	Origin     ExportOrigin
 	Imported   string
-	Methods    []string // struct ASt
+	Methods    []string // struct AST
 	FieldTotal int      // struct AST
+	Fields     []int    // struct AST 所有字段的offset
 }
 
 func NewExportMeta(name string, ast ast.Node, source string, exportIdx int) *ExportMeta {
@@ -166,7 +167,7 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 	source := file
 
 	structs := program.Structs
-	// methods := program.Methods
+	methods := program.Methods
 
 	exports2 := ExportMetas{}
 	ident := map[string]int{}
@@ -224,8 +225,13 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 				}
 			}
 		case *ast.StructDeclStmt:
-			exportStruct[stmt.Name.Value] = stmt
-			delete(ident, stmt.Name.Value)
+			name := stmt.Name.Value
+			if idx, ok := ident[name]; ok {
+				e := NewExportMeta(name, stmt, source, idx)
+				exports2[name] = e
+				exportStruct[name] = stmt
+				delete(ident, name)
+			}
 		}
 	}
 
@@ -287,15 +293,78 @@ func resolveExports2(l *Loader, file string, program *ast.Program, imports []*as
 					exports2[spe.Local] = nep
 				}
 				if (kind & 2) == 2 {
-					importStructMeta[spe.Local] = nep
+					importStructMeta[spe.Local] = ep
 				}
 			}
 		}
 	}
 
-	// 处理 export struct, 得到字段总数，收集直接方法
-	//for name, struc := range exportStruct {
-	//}
+	handleExports(exports2, exportStruct, structs, methods, importStructMeta)
 
 	return exports2
+}
+
+func handleExports(
+	exports2 ExportMetas,
+	exportStructs, structs map[string]*ast.StructDeclStmt,
+	methods map[string][]*ast.MethodDeclExpr,
+	importStrutMetas map[string]*ExportMeta,
+) {
+	// 处理 export struct, 得到字段总数，收集直接方法
+	for _, exportStruct := range exportStructs {
+		handleExport(exports2, structs, importStrutMetas, exportStruct, methods)
+	}
+}
+
+func handleExport(
+	exports2 ExportMetas,
+	structs map[string]*ast.StructDeclStmt,
+	importStrutMetas map[string]*ExportMeta,
+	exportStruct *ast.StructDeclStmt,
+	methods map[string][]*ast.MethodDeclExpr,
+) {
+	name := exportStruct.Name.Value
+	ep2, ok := exports2[name]
+	if !ok || ep2.Origin == OriginReExport {
+		return
+	}
+	myMethods := []string{}
+	total, offsets := CalcStructFields(structs, importStrutMetas, exportStruct, 0)
+	ms := methods[name]
+
+	for _, m := range ms {
+		myMethods = append(myMethods, m.Fn.Name)
+	}
+
+	ep2.FieldTotal = total
+	ep2.Fields = offsets
+	ep2.Methods = myMethods
+}
+
+func CalcStructFields(structs map[string]*ast.StructDeclStmt, importStructMetas map[string]*ExportMeta, exportStruct *ast.StructDeclStmt, offset int) (int, []int) {
+	offsets := []int{}
+	fields := exportStruct.Fields
+	for _, field := range fields {
+		offsets = append(offsets, offset)
+		if !field.IsEmbed {
+			offset++
+			continue
+		}
+		name := field.Name.Value
+		// 从本文件中找
+		st, ok := structs[name]
+		if ok {
+			no, _ := CalcStructFields(structs, importStructMetas, st, offset)
+			offset = no
+			continue
+		}
+
+		// 从import中找
+		stm, ok := importStructMetas[name]
+		if ok {
+			offset += stm.FieldTotal
+		}
+	}
+
+	return offset, offsets
 }
