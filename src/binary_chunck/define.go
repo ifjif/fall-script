@@ -32,8 +32,9 @@ const (
 type TypeTag byte
 
 const (
-	_   byte = iota
-	I64      = iota
-	STR      = iota
-	CF       = iota
+	_ byte = iota
+	I64
+	STR
+	CF
+	STRUCT_META
 )

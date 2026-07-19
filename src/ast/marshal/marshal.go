@@ -1,10 +1,8 @@
 package marshal
 
 import (
-	"bytes"
-	"encoding/binary"
-
 	. "zzc/fall-script/src/ast"
+	binarychunck "zzc/fall-script/src/binary_chunck"
 	"zzc/fall-script/src/token"
 )
 
@@ -14,54 +12,18 @@ const (
 )
 
 type AstWriter struct {
-	bytes.Buffer
-}
-
-func (aw *AstWriter) writeBool(b bool) {
-	v := 0
-	if b {
-		v = 1
-	}
-	aw.WriteByte(byte(v))
-}
-
-func (aw *AstWriter) writeUint8(d byte) {
-	aw.WriteByte(d)
-}
-
-func (aw *AstWriter) writeUint16(d uint16) {
-	binary.Write(aw, binary.BigEndian, d)
-}
-
-func (aw *AstWriter) writeUint32(d uint32) {
-	binary.Write(aw, binary.BigEndian, d)
-}
-
-func (aw *AstWriter) writeUint64(d uint64) {
-	binary.Write(aw, binary.BigEndian, d)
-}
-
-func (aw *AstWriter) writeString(str string) {
-	length := len(str)
-	if length <= 255 {
-		aw.writeUint8(SHORT_STR)
-		aw.writeUint8(byte(length))
-	} else {
-		aw.writeUint8(LONG_STR)
-		aw.writeUint32(uint32(length))
-	}
-	aw.WriteString(str)
+	binarychunck.FlWriter
 }
 
 func (aw *AstWriter) writeKind(k AstKind) {
-	aw.WriteByte(byte(k))
+	aw.WriteUint8(byte(k))
 }
 
 func (aw *AstWriter) writeToken(token token.Token) {
-	aw.writeString(string(token.Type))
-	aw.writeString(string(token.Value))
-	aw.writeUint32(uint32(token.Line))
-	aw.writeUint32(uint32(token.Col))
+	aw.WriteStr(string(token.Type))
+	aw.WriteStr(token.Value)
+	aw.WriteUint32(uint32(token.Line))
+	aw.WriteUint32(uint32(token.Col))
 }
 
 func MarshalAst(node Node) []byte {
@@ -171,6 +133,10 @@ func isNil(node Node) bool {
 		if node == nil {
 			return true
 		}
+	case *StructDeclStmt:
+		if node == nil {
+			return true
+		}
 	}
 
 	return false
@@ -230,13 +196,15 @@ func marshalAst(node Node, awr *AstWriter) {
 		marshalFn(node, awr)
 	case *IfExpr:
 		marshalIf(node, awr)
+	case *StructDeclStmt:
+		marshalStructDeclStmt(node, awr)
 	}
 }
 
 func marshalProgram(node *Program, w *AstWriter) {
 	w.writeKind(PROGRAM_K)
 	length := len(node.Stmts)
-	w.writeUint32(uint32(length))
+	w.WriteUint32(uint32(length))
 	for _, stmt := range node.Stmts {
 		marshalAst(stmt, w)
 	}
@@ -246,7 +214,7 @@ func marshalBlock(node *BlockStmt, w *AstWriter) {
 	w.writeKind(BLOCK_K)
 	w.writeToken(node.Token)
 	length := len(node.Stmts)
-	w.writeUint32(uint32(length))
+	w.WriteUint32(uint32(length))
 	for _, stmt := range node.Stmts {
 		marshalAst(stmt, w)
 	}
@@ -301,25 +269,25 @@ func marshalNull(node *NullExpr, w *AstWriter) {
 func marshalInt(node *IntExpr, w *AstWriter) {
 	w.writeKind(INTEGER_k)
 	w.writeToken(node.Token)
-	w.writeUint64(uint64(node.Value))
+	w.WriteUint64(uint64(node.Value))
 }
 
 func marshalStr(node *StrExpr, w *AstWriter) {
 	w.writeKind(STRING_K)
 	w.writeToken(node.Token)
-	w.writeString(node.Value)
+	w.WriteStr(node.Value)
 }
 
 func marshalBool(node *BoolExpr, w *AstWriter) {
 	w.writeKind(BOOL_K)
 	w.writeToken(node.Token)
-	w.writeBool(node.Value)
+	w.WriteBool(node.Value)
 }
 
 func marshalIdent(node *IdentExpr, w *AstWriter) {
 	w.writeKind(IDENT_K)
 	w.writeToken(node.Token)
-	w.writeString(node.Value)
+	w.WriteStr(node.Value)
 }
 
 func marshalAssign(node *AssignExpr, w *AstWriter) {
@@ -349,14 +317,14 @@ func marshalInfix(node *InfixExpr, w *AstWriter) {
 	w.writeKind(INFIX_K)
 	w.writeToken(node.Token)
 	marshalAst(node.Left, w)
-	w.writeString(node.Op)
+	w.WriteStr(node.Op)
 	marshalAst(node.Right, w)
 }
 
 func marshalPrefix(node *PrefixExpr, w *AstWriter) {
 	w.writeKind(PREFIX_K)
 	w.writeToken(node.Token)
-	w.writeString(node.Op)
+	w.WriteStr(node.Op)
 	marshalAst(node.Right, w)
 }
 
@@ -364,7 +332,7 @@ func marshalCall(node *CallExpr, w *AstWriter) {
 	w.writeKind(CALL_K)
 	w.writeToken(node.Token)
 	marshalAst(node.Fn, w)
-	w.writeUint8(byte(len(node.Args)))
+	w.WriteUint8(byte(len(node.Args)))
 	for _, arg := range node.Args {
 		marshalAst(arg, w)
 	}
@@ -373,7 +341,7 @@ func marshalCall(node *CallExpr, w *AstWriter) {
 func marshalArr(node *ArrExpr, w *AstWriter) {
 	w.writeKind(ARRAY_K)
 	w.writeToken(node.Token)
-	w.writeUint16(uint16(len(node.Elements)))
+	w.WriteUint16(uint16(len(node.Elements)))
 	for _, ele := range node.Elements {
 		marshalAst(ele, w)
 	}
@@ -383,7 +351,7 @@ func marshalHash(node *HashExpr, w *AstWriter) {
 	w.writeKind(HASH_K)
 	w.writeToken(node.Token)
 
-	w.writeUint16(uint16(len(node.Pairs)))
+	w.WriteUint16(uint16(len(node.Pairs)))
 	for _, pair := range node.Pairs {
 		marshalAst(pair.Key, w)
 		marshalAst(pair.Value, w)
@@ -393,15 +361,15 @@ func marshalHash(node *HashExpr, w *AstWriter) {
 func marshalFn(node *FnExpr, w *AstWriter) {
 	w.writeKind(FUNCTION_K)
 	w.writeToken(node.Token)
-	w.writeString(node.Name)
+	w.WriteStr(node.Name)
 	marshalAst(node.Ident, w)
-	w.writeUint8(uint8(len(node.Params)))
+	w.WriteUint8(uint8(len(node.Params)))
 	for _, param := range node.Params {
 		marshalAst(param, w)
 	}
 	marshalAst(node.Body, w)
-	w.writeBool(node.UnName)
-	w.writeUint8(uint8(len(node.Attrs)))
+	w.WriteBool(node.UnName)
+	w.WriteUint8(uint8(len(node.Attrs)))
 	for _, attr := range node.Attrs {
 		marshalAttr(attr, w)
 	}
@@ -410,8 +378,8 @@ func marshalFn(node *FnExpr, w *AstWriter) {
 func marshalAttr(node *AttributeExpr, w *AstWriter) {
 	w.writeKind(ATTR_K)
 	w.writeToken(node.Token)
-	w.writeString(node.Name)
-	w.writeUint8(uint8(len(node.Args)))
+	w.WriteStr(node.Name)
+	w.WriteUint8(uint8(len(node.Args)))
 	for _, arg := range node.Args {
 		marshalAst(arg, w)
 	}
@@ -423,4 +391,20 @@ func marshalIf(node *IfExpr, w *AstWriter) {
 	marshalAst(node.Condition, w)
 	marshalAst(node.Consequence, w)
 	marshalAst(node.Alternative, w)
+}
+
+func marshalStructDeclStmt(node *StructDeclStmt, w *AstWriter) {
+	w.writeKind(STRUCT_K)
+	w.writeToken(node.Token)
+	marshalIdent(node.Name, w)
+	w.WriteUint16(uint16(len(node.Fields)))
+	for _, f := range node.Fields {
+		marshalFieldDeclExpr(f, w)
+	}
+}
+
+func marshalFieldDeclExpr(node *FieldDeclExpr, w *AstWriter) {
+	w.writeToken(node.Token)
+	marshalIdent(node.Name, w)
+	w.WriteBool(node.IsEmbed)
 }

@@ -118,5 +118,4 @@ func (fv *FsVM) link(mo *object.Module, cmo *object.CompiledModule, dir string) 
 		}
 		cmo.Globals[i] = globalRef
 	}
-	// todo struct promoted
 }

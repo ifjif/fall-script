@@ -1,7 +1,6 @@
 package module
 
 import (
-	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -147,37 +146,48 @@ func (l *Loader) LoadMetaFile(file string) (ExportMetas, error) {
 		return nil, err
 	}
 
+	fr := binarychunck.FlReader{}
+	fr.InitData(data)
 	exportMetas := ExportMetas{}
-	count := binary.BigEndian.Uint16(data)
-	data = data[2:]
+	count := fr.ReadUint16()
 
+	// Methods    []string // struct AST
+	// FieldTotal int      // struct AST
+	// Fields     []int    // struct AST 所有字段的offset
 	for range count {
-		nl := binary.BigEndian.Uint16(data)
-		data = data[2:]
-		name := string(data[:nl])
-		data = data[nl:]
-		sl := binary.BigEndian.Uint16(data)
-		data = data[2:]
-		source := string(data[:sl])
-		data = data[sl:]
-		il := binary.BigEndian.Uint16(data)
-		data = data[2:]
-		imported := string(data[:il])
-		data = data[il:]
-		exportIdx := binary.BigEndian.Uint16(data)
-		data = data[2:]
-		origin := data[0]
-		data = data[1:]
-		ast, nd := marshal.Unmarshal(data)
-		data = nd
+		name := fr.ReadStr()
+		source := fr.ReadStr()
+		imported := fr.ReadStr()
+		exportIdx := fr.ReadUint16()
+		origin := fr.ReadUint8()
+
+		methodCount := fr.ReadVarint()
+		methods := make([]string, methodCount)
+		for i := range methodCount {
+			methods[i] = fr.ReadStr()
+		}
+
+		fieldTotal := fr.ReadVarint()
+
+		fieldCount := fr.ReadVarint()
+		fields := make([]int, fieldCount)
+		for i := range fieldCount {
+			fields[i] = int(fr.ReadVarint())
+		}
+
+		ast, ndata := marshal.Unmarshal(fr.Bytes())
+		fr.InitData(ndata)
 
 		em := &ExportMeta{
-			Name:      name,
-			Source:    source,
-			ExportIdx: int(exportIdx),
-			Imported:  imported,
-			Ast:       ast,
-			Origin:    ExportOrigin(origin),
+			Name:       name,
+			Source:     source,
+			ExportIdx:  int(exportIdx),
+			Imported:   imported,
+			Ast:        ast,
+			Origin:     ExportOrigin(origin),
+			Methods:    methods,
+			FieldTotal: int(fieldTotal),
+			Fields:     fields,
 		}
 
 		exportMetas[name] = em

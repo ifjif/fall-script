@@ -28,4 +28,5 @@ const (
 	EXPR_K
 	PROGRAM_K
 	ATTR_K
+	STRUCT_K
 )

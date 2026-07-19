@@ -46,12 +46,16 @@
   9. `,`
   10. `"`
 
+- **访问符**
+  1. `.`
+
 - **注释符**
   1. `//`
   2. `/**/`
 
 ## 2.关键字
 
+- `struct`
 - `import`
 - `export`
 - `fn`
@@ -94,7 +98,10 @@
 - `{a:1, b:2,true:1, false:2, 1:1, 2:2, "abc":12}`
 - `fn(...){...}`
 - `fn name(...){...}`
+- `fn (x xx) name(...){...}`
 - `if(..){...}else if (...){...}else {...}`
+- `a.b`
+- `A{a:xx,b:xx,C:xx}`
 
 ## 4. 运算符优先级
 
@@ -108,9 +115,11 @@
 - `PREFIX(-, !)`
 - `CALL(fn())`
 - `INDEX(array[index])`
+- `MEMBER(a.b)`
 
 ## 5.语句
 
+- `struct XX {A, a:, b:}`
 - `import {xx, xxx as aa} from "xx"`
 - `import * as xx from "xx"`
 - `export xxx`
@@ -398,7 +407,7 @@
 
 - `Nop(u8:0)`
 - `Null_`
-- `Const`
+- `Const               u16(常量池索引)`
 - `Pop`
 - `Gt`
 - `Ge`
@@ -412,27 +421,32 @@
 - `Not`
 - `True`
 - `False`
-- `Array_`
-- `Hash_`
+- `Array_              u16(数组元素个数)`
+- `Hash_               u16(键值总个数)`
 - `Index`
 - `Slice`
-- `Call`
-- `Jump`
-- `JumpIsFalse`
-- `SetGlobal`
-- `GetGlobal`
-- `SetLocal`
-- `GetLocal`
-- `NewBoxLocal`
-- `SetBoxLocal`
-- `GetBoxLocal`
-- `SetFree`
-- `GetFree`
-- `GetFreeRaw`
-- `GetBuiltin`
-- `Closure_`
+- `Call                u16(参数个数)`
+- `Jump                u16(跳转到的指令位置)`
+- `JumpIsFalse         u16(跳转到的指令位置)`
+- `SetGlobal           u16(全局变量索引)`
+- `GetGlobal           u16(全局变量索引)`
+- `SetLocal            u8(局部变量索引)`
+- `GetLocal            u8(局部变量索引)`
+- `NewBoxLocal         u8(局部变量索引)`
+- `SetBoxLocal         u8(局部变量索引)`
+- `GetBoxLocal         u8(局部变量索引)`
+- `SetFree             u8(自由变量索引)`
+- `GetFree             u8(自由变量索引)`
+- `GetFreeRaw          u8(自由变量索引)`
+- `GetBuiltin          u8(内置函数索引)`
+- `SetIndex`
+- `Closure_            u16(函数在常量池索引) u8(自由变量数量)`
 - `CurClosure`
 - `Dup`
+- `InitStruct          u16([key:value]个数)`
+- `GetField`
+- `SetField`
+- `CallMethod          u8(参数个数)`
 - `Return`
 - `XReturn`
 
@@ -440,19 +454,26 @@
 
     count               u16
     export_meta{
-      name_length       u16
+      name_length       varint
       name              string
-      source_length     u16
+      source_length     varint
       source            string
-      imported_length   u16
+      imported_length   varint
       imported          string
       export_idx        u8
       origin            u8
+      Methods           [         // struct AST 所有直接方法
+          str_length    varint
+          data          string
+      ]
+      FieldTotal        varint     // struct AST 总字段数
+      Fields            [          // struct AST 所有直接字段的offset
+          value         varint
+      ]
       ast {
-        kind            u8
+        kind              u8
         内部string结构:{
-          tag           u8(short_str:0, long_str:1)
-          length        (0:u8 / 1:u32)
+          length        varint
           content       string
         }
       }
@@ -461,14 +482,14 @@
 ## 12.二进制格式(大端序)
 
     header{
-      SIGNATURE = "fallscript"
+      SIGNATURE = length(varint) byte("fallscript")
       MAJOR     = (u8)0
       MINOR     = (u8)1
       PATCH     = (u8)0
     }
     module_meta{
-      name_length     (u32)
-      name string
+      name_length     (varint)
+      name            string
       global_num      (u16)
       imports_num     (u16)
       imports {
@@ -482,15 +503,31 @@
         global_idx    (u16)
       }
     }
+    struct_meta_constant_position  count(varint)    value[varint]
     compiled_function {
       MaxStackDepth   (u8)
       LocalVarNum     (u8)
       constant_num    (u16)
       Constants{
-        i64:                type-tag(u8):I64(1)               (i64)value
-        string:             type-tag(u8):STR(2) length(u32)        value
-        compiled_function:  type-tag(u8):CF(3)                     value
+        i64:                type-tag(u8):I64(1)                               value(varint)
+        string:             type-tag(u8):STR(2)         length(varint)        value(string)
+        compiled_function:  type-tag(u8):CF(3)                                value(compiled_function)
+        struct_meta:        type-tag(u8):STRUCT_META(4)                       value{
+          Name              length(varint)              value(string)
+          FieldCount                                    value(varint)
+          Fields                count(varint)           value{
+              Name              length(varint)              value(string)
+              IsEmbed                                       value(u8 0:false,1:true)
+              Index                                         value(varint)
+              TargetStructMeta                              value(varint)
+          }
+          Methods               count(varint)           value{
+              TargetStructMeta                              value(varint)
+              Name              length(varint)              value(string)
+              Index                                         value(varint)
+          }
+        }
       }
-      instruction_length (u32)
-      Instructions
+      instruction_length (varint)
+      Instructions       [byte]
     }

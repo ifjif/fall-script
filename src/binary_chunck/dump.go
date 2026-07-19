@@ -1,25 +1,22 @@
 package binarychunck
 
 import (
-	"bytes"
-	"encoding/binary"
-
 	"zzc/fall-script/src/object"
 )
 
 func Dump(module *object.Module) []byte {
-	var buf bytes.Buffer
+	var buf FlWriter
 	writeHeader(&buf)
 	writeModule(&buf, module)
 
 	return buf.Bytes()
 }
 
-func writeHeader(buf *bytes.Buffer) {
-	buf.WriteString(SIGNATURE)
-	buf.WriteByte(MAJOR)
-	buf.WriteByte(MINOR)
-	buf.WriteByte(PATCH)
+func writeHeader(buf *FlWriter) {
+	buf.WriteStr(SIGNATURE)
+	buf.WriteUint8(MAJOR)
+	buf.WriteUint8(MINOR)
+	buf.WriteUint8(PATCH)
 }
 
 /*
@@ -33,27 +30,26 @@ func writeHeader(buf *bytes.Buffer) {
 
 *
 */
-func writeModule(buf *bytes.Buffer, module *object.Module) {
+func writeModule(buf *FlWriter, module *object.Module) {
 	writeModuleName(buf, module.Name)
 	writeModuleGlobalNum(buf, module.GlobalNum)
 	writeModuleImports(buf, module.Imports)
 	writeModuleExports(buf, module.Exports)
+	writeModuleStructMetaConstantPosition(buf, module.Structs)
 	writeFunction(buf, module.Cf)
 }
 
-func writeModuleName(buf *bytes.Buffer, name string) {
-	length := len(name)
-	writeUint32(buf, length)
-	buf.WriteString(name)
+func writeModuleName(buf *FlWriter, name string) {
+	buf.WriteStr(name)
 }
 
-func writeModuleGlobalNum(buf *bytes.Buffer, globalNum int) {
-	writeUint16(buf, globalNum)
+func writeModuleGlobalNum(buf *FlWriter, globalNum int) {
+	buf.WriteUint16(uint16(globalNum))
 }
 
-func writeModuleImports(buf *bytes.Buffer, imports []*object.ImportRef) {
+func writeModuleImports(buf *FlWriter, imports []*object.ImportRef) {
 	num := len(imports)
-	writeUint16(buf, num)
+	buf.WriteUint16(uint16(num))
 	for _, imp := range imports {
 		writeModuleImport(buf, imp)
 	}
@@ -68,10 +64,10 @@ func writeModuleImports(buf *bytes.Buffer, imports []*object.ImportRef) {
 		Local    int
 	}
 */
-func writeModuleImport(buf *bytes.Buffer, imp *object.ImportRef) {
-	writeUint16(buf, imp.From)
-	writeUint16(buf, imp.Imported)
-	writeUint16(buf, imp.Local)
+func writeModuleImport(buf *FlWriter, imp *object.ImportRef) {
+	buf.WriteUint16(uint16(imp.From))
+	buf.WriteUint16(uint16(imp.Imported))
+	buf.WriteUint16(uint16(imp.Local))
 }
 
 /*
@@ -82,68 +78,133 @@ func writeModuleImport(buf *bytes.Buffer, imp *object.ImportRef) {
 		GlobalId int
 	}
 */
-func writeModuleExports(buf *bytes.Buffer, exports []*object.ExportRef) {
+func writeModuleExports(buf *FlWriter, exports []*object.ExportRef) {
 	num := len(exports)
-	writeUint16(buf, num)
+	buf.WriteUint16(uint16(num))
 	for _, exp := range exports {
 		writeModuleExport(buf, exp)
 	}
 }
 
-func writeModuleExport(buf *bytes.Buffer, exp *object.ExportRef) {
-	writeUint16(buf, exp.Name)
-	writeUint16(buf, exp.GlobalId)
+func writeModuleExport(buf *FlWriter, exp *object.ExportRef) {
+	buf.WriteUint16(uint16(exp.Name))
+	buf.WriteUint16(uint16(exp.GlobalId))
 }
 
-func writeFunction(buf *bytes.Buffer, cf *object.CompiledFunction) {
+// structMeta 在常量池中的位置
+func writeModuleStructMetaConstantPosition(buf *FlWriter, exports map[int]*object.StructMeta) {
+	count := len(exports)
+	buf.WriteVarint(uint64(count))
+	for idx := range exports {
+		buf.WriteVarint(uint64(idx))
+	}
+}
+
+func writeFunction(buf *FlWriter, cf *object.CompiledFunction) {
 	writeMaxStackDepth(buf, cf.StackDepth)
 	writeLocalVarNum(buf, cf.LocalsNum)
 	writeConstants(buf, cf.Constants)
 	writeInstructions(buf, cf.Instructions)
 }
 
-func writeMaxStackDepth(buf *bytes.Buffer, depth int) {
-	buf.WriteByte(byte(depth))
+func writeMaxStackDepth(buf *FlWriter, depth int) {
+	buf.WriteUint8(byte(depth))
 }
 
-func writeLocalVarNum(buf *bytes.Buffer, num int) {
-	buf.WriteByte(byte(num))
+func writeLocalVarNum(buf *FlWriter, num int) {
+	buf.WriteUint8(byte(num))
 }
 
-func writeConstants(buf *bytes.Buffer, consts []object.Object) {
+/*
+*
+
+	Name        string
+	FieldCount  int
+	Fields      map[string]*FieldInfo
+	Methods     map[string]*MethodRef
+
+*
+*/
+func writeStructMeta(buf *FlWriter, sm *object.StructMeta) {
+	buf.WriteStr(sm.Name)
+	buf.WriteVarint(uint64(sm.FieldCount))
+	writeStructMetaFields(buf, sm.Fields)
+	writeStructMetaMethods(buf, sm.Methods)
+}
+
+func writeStructMetaFields(buf *FlWriter, fields map[string]*object.FieldInfo) {
+	count := len(fields)
+	buf.WriteVarint(uint64(count))
+
+	for _, field := range fields {
+		writeStructMetaField(buf, field)
+	}
+}
+
+/*
+*
+	Name             string
+	IsEmbed          bool
+	Index            int
+	TargetStructMeta int
+*
+*/
+
+func writeStructMetaField(buf *FlWriter, field *object.FieldInfo) {
+	buf.WriteStr(field.Name)
+	buf.WriteBool(field.IsEmbed)
+	buf.WriteVarint(uint64(field.Index))
+	buf.WriteVarint(uint64(field.TargetStructMeta))
+}
+
+func writeStructMetaMethods(buf *FlWriter, methods map[string]*object.MethodRef) {
+	count := len(methods)
+	buf.WriteVarint(uint64(count))
+	for _, method := range methods {
+		writeStructMetaMethod(buf, method)
+	}
+}
+
+/*
+*
+
+	TargetStructMeta int
+	Name             string
+	Index            int
+*/
+func writeStructMetaMethod(buf *FlWriter, method *object.MethodRef) {
+	buf.WriteVarint(uint64(method.TargetStructMeta))
+	buf.WriteStr(method.Name)
+	buf.WriteVarint(uint64(method.Index))
+}
+
+func writeConstants(buf *FlWriter, consts []object.Object) {
 	num := len(consts)
-	writeUint16(buf, num)
+	buf.WriteUint16(uint16(num))
 	for _, con := range consts {
 		writeConstant(buf, con)
 	}
 }
 
-func writeConstant(buf *bytes.Buffer, con object.Object) {
+func writeConstant(buf *FlWriter, con object.Object) {
 	switch con := con.(type) {
 	case *object.Integer:
-		buf.WriteByte(I64)
-		binary.Write(buf, binary.BigEndian, con.Value)
+		buf.WriteUint8(I64)
+		buf.WriteVarint(uint64(con.Value))
 	case *object.String:
-		length := len(con.Value)
-		buf.WriteByte(STR)
-		writeUint32(buf, length)
-		buf.WriteString(con.Value)
+		buf.WriteUint8(STR)
+		buf.WriteStr(con.Value)
 	case *object.CompiledFunction:
-		buf.WriteByte(CF)
+		buf.WriteUint8(CF)
 		writeFunction(buf, con)
+	case *object.StructMeta:
+		buf.WriteUint8(STRUCT_META)
+		writeStructMeta(buf, con)
 	}
 }
 
-func writeInstructions(buf *bytes.Buffer, instructions []byte) {
+func writeInstructions(buf *FlWriter, instructions []byte) {
 	length := len(instructions)
-	writeUint32(buf, length)
-	buf.Write(instructions)
-}
-
-func writeUint16(buf *bytes.Buffer, i int) {
-	binary.Write(buf, binary.BigEndian, uint16(i))
-}
-
-func writeUint32(buf *bytes.Buffer, i int) {
-	binary.Write(buf, binary.BigEndian, uint32(i))
+	buf.WriteVarint(uint64(length))
+	buf.WriteBytes(instructions)
 }

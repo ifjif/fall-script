@@ -7,7 +7,7 @@ type Module struct {
 	GlobalNum int
 	Imports   []*ImportRef
 	Exports   []*ExportRef
-	Structs   []*StructMeta
+	Structs   map[int]*StructMeta
 	Cf        *CompiledFunction
 }
 

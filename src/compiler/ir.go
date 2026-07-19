@@ -45,9 +45,10 @@ func (c *Compiler) compileExportStmt(stmt *ir.ExportStmt) {
 }
 
 func (c *Compiler) compileStructDeclStmtIr(stmt *ir.StructDeclStmt) {
-	c.emit(code.Const, c.addConstant(stmt.MetaData))
+	cidx := c.addConstant(stmt.MetaData)
+	c.emit(code.Const, cidx)
 	c.storeSymbol(stmt.Name)
-	c.structs = append(c.structs, stmt.MetaData)
+	c.structs[cidx] = stmt.MetaData
 }
 
 func (c *Compiler) compileLetStmtIr(stmt *ir.LetStmt) {

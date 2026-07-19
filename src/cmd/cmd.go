@@ -52,7 +52,7 @@ func (c *Cmd) Interprete() {
 		loader := module.NewLoader()
 		file := module.ResolveImportPath(".", c.File)
 		loader.LoadFile(file)
-		// loader.DumpFile(file)
+		loader.DumpFile(file)
 	} else {
 		fsVM := vm.NewFsVMWithFile(c.File)
 		fsVM.Run()

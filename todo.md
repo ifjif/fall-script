@@ -1,4 +1,5 @@
 evalutor 待添加 sliceExpr 求值
+evalutor 待添加 struct 求值
 
 evalutor 语句返回 nil 待处理 为 NULL
 

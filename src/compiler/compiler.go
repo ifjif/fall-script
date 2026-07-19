@@ -11,7 +11,7 @@ type Compiler struct {
 	scopeIndex int
 	imports    []*object.ImportRef
 	exports    []*object.ExportRef
-	structs    []*object.StructMeta
+	structs    map[int]*object.StructMeta
 	program    *ir.Program
 }
 
@@ -22,7 +22,7 @@ func NewCompiler(program *ir.Program) *Compiler {
 		scopes:  []*Scope{mainScope},
 		imports: []*object.ImportRef{},
 		exports: []*object.ExportRef{},
-		structs: []*object.StructMeta{},
+		structs: map[int]*object.StructMeta{},
 	}
 
 	return c

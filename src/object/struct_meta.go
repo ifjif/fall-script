@@ -4,7 +4,7 @@ import "fmt"
 
 type StructMeta struct {
 	Name        string
-	FieldCount  int
+	FieldCount  int // 总字段数
 	Fields      map[string]*FieldInfo
 	Methods     map[string]*MethodRef
 	OwnerModule *CompiledModule // 它所属的模块，访问它的组合字段都从这个module找

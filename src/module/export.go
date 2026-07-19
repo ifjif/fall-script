@@ -1,12 +1,11 @@
 package module
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 
 	"zzc/fall-script/src/ast"
 	"zzc/fall-script/src/ast/marshal"
+	binarychunck "zzc/fall-script/src/binary_chunck"
 	"zzc/fall-script/src/macro"
 )
 
@@ -72,6 +71,9 @@ func (ems ExportMetas) Serialize(file string) []byte {
 			output[name] = nem
 			continue
 		}
+		nem.Methods = em.Methods
+		nem.FieldTotal = em.FieldTotal
+		nem.Fields = em.Fields
 
 		fn, ok := em.Ast.(*ast.FnExpr)
 		if !ok {
@@ -104,23 +106,35 @@ func (ems ExportMetas) Serialize(file string) []byte {
 	//	ExportIdx int
 	//	Origin    ExportOrigin
 	//	Imported  string
-	var buf bytes.Buffer
-	binary.Write(&buf, binary.BigEndian, uint16(len(output)))
+	//  Methods    []string // struct AST
+	//  FieldTotal int      // struct AST
+	//  Fields     []int    // struct AST 所有字段的offset
+	var buf binarychunck.FlWriter
+
+	buf.WriteUint16(uint16(len(output)))
 	for _, em := range output {
-		binary.Write(&buf, binary.BigEndian, uint16(len(em.Name)))
-		buf.WriteString(em.Name)
-		binary.Write(&buf, binary.BigEndian, uint16(len(em.Source)))
-		buf.WriteString(em.Source)
-		binary.Write(&buf, binary.BigEndian, uint16(len(em.Imported)))
-		buf.WriteString(em.Imported)
-		binary.Write(&buf, binary.BigEndian, uint16(em.ExportIdx))
-		binary.Write(&buf, binary.BigEndian, uint8(em.Origin))
-		data := marshal.MarshalAst(em.Ast)
-		_, err := buf.Write(data)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
+		buf.WriteStr(em.Name)
+		buf.WriteStr(em.Source)
+		buf.WriteStr(em.Imported)
+		buf.WriteUint16(uint16(em.ExportIdx))
+		buf.WriteUint8(byte(em.Origin))
+		// methods
+		buf.WriteVarint(uint64(len(em.Methods)))
+		for _, m := range em.Methods {
+			fmt.Println(m)
+			buf.WriteStr(m)
 		}
+
+		// fieldTotal
+		buf.WriteVarint(uint64(em.FieldTotal))
+
+		// Fields
+		buf.WriteVarint(uint64(len(em.Fields)))
+		for _, f := range em.Fields {
+			buf.WriteVarint(uint64(f))
+		}
+		data := marshal.MarshalAst(em.Ast)
+		buf.WriteBytes(data)
 	}
 
 	//	fmt.Println("=================================序列化ast end")
