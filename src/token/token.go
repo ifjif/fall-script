@@ -3,24 +3,25 @@ package token
 type TokenType string
 
 const (
-	ILLEGAL  = "ILLEGAL"
-	EOF      = "EOF"
-	PLUS     = "+"
-	MINUS    = "-"
-	ASTERISK = "*"
-	SLASH    = "/"
-	BANG     = "!"
-	ASSIGN   = "="
-	LT       = "<"
-	LE       = "<="
-	GT       = ">"
-	GE       = ">="
-	EQ       = "=="
-	NEQ      = "!="
-	AND      = "&&"
-	OR       = "||"
-	BAND     = "&"
-	BOR      = "|"
+	ILLEGAL   = "ILLEGAL"
+	EOF       = "EOF"
+	PLUS      = "+"
+	MINUS     = "-"
+	ASTERISK  = "*"
+	SLASH     = "/"
+	BANG      = "!"
+	ASSIGN    = "="
+	LT        = "<"
+	LE        = "<="
+	GT        = ">"
+	GE        = ">="
+	EQ        = "=="
+	NEQ       = "!="
+	AND       = "&&"
+	OR        = "||"
+	BAND      = "&"
+	BOR       = "|"
+	FAT_ARROW = "=>"
 
 	COLON     = ":"
 	SEMICOLON = ";"
@@ -51,12 +52,14 @@ const (
 	IMPORT   = "IMPORT"
 	EXPORT   = "EXPORT"
 	STRUCT   = "STRUCT"
+	MATCH    = "MATCH"
 )
 
 var keyword = map[string]TokenType{
 	"struct": STRUCT,
 	"import": IMPORT,
 	"export": EXPORT,
+	"match":  MATCH,
 	"fn":     FUNCTION,
 	"let":    LET,
 	"for":    FOR,

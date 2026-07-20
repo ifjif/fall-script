@@ -7,6 +7,7 @@ import (
 
 	"zzc/fall-script/src/module"
 	"zzc/fall-script/src/parser"
+	"zzc/fall-script/src/semantic"
 	"zzc/fall-script/src/vm"
 )
 
@@ -33,7 +34,7 @@ func (c *Cmd) Execute() {
 		error := strings.Join(p.Errors(), "\n")
 		fmt.Println(error)
 	}
-	fmt.Println(program.String())
+	// fmt.Println(program.String())
 
 	// macroEnv := object.NewEnvironment()
 	// macro.DefineMacros(program, macroEnv)
@@ -45,6 +46,14 @@ func (c *Cmd) Execute() {
 	//	if err, ok := result.(*object.ErrorObj); ok {
 	//		fmt.Println(err.Inspect())
 	//	}
+
+	analyzer := semantic.NewAnalyzer(nil)
+	ip := analyzer.Analyze(program, nil)
+	if len(analyzer.Errors()) > 0 {
+		err := strings.Join(analyzer.Errors(), "\n")
+		panic(err)
+	}
+	fmt.Println(ip.String())
 }
 
 func (c *Cmd) Interprete() {

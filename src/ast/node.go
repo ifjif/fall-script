@@ -19,3 +19,8 @@ type ExprNode interface {
 	Node
 	ExprNode()
 }
+
+type PatternNode interface {
+	ExprNode
+	patternNode()
+}

@@ -95,7 +95,7 @@ func (p *Parser) parseGroupExpr() ExprNode {
 
 func (p *Parser) parseIdentExpr() ExprNode {
 	expr := &IdentExpr{Token: p.curToken, Value: p.curToken.Value}
-	if p.peekTypeIs(LBRACE) {
+	if p.peekTypeIs(LBRACE) && p.exprKind != MATCH {
 		p.nextToken()
 		sl := p.parseStructLiteralExpr(expr)
 		return sl
@@ -420,6 +420,83 @@ func (p *Parser) parseMemberExpr(left ExprNode) ExprNode {
 	p.nextToken()
 	// todo 可以是 Ident或int
 	expr.Member = p.parseExpr(precedences)
+
+	return expr
+}
+
+func (p *Parser) parseMatchExpr() ExprNode {
+	expr := &MatchExpr{Token: p.curToken}
+	p.exprKind = p.curToken.Type
+	p.nextToken()
+
+	// todo 带重做更完善(设置表达式作用域)
+	expr.Subject = p.parseExpr(LOWEST)
+	p.exprKind = ""
+
+	if !p.expectPeek(LBRACE) {
+		return nil
+	}
+
+	expr.Arms = p.parseMatchArms(RBRACE)
+	return expr
+}
+
+func (p *Parser) parseMatchArms(end TokenType) []*MatchArmExpr {
+	mas := make([]*MatchArmExpr, 0)
+
+	for p.nexType() != end {
+		p.nextToken()
+		arm := p.parseMatchArm()
+		if arm != nil {
+			mas = append(mas, arm)
+		}
+	}
+
+	if !p.expectPeek(end) {
+		return nil
+	}
+
+	// 判断最后一个是否是 _
+	last := mas[len(mas)-1]
+	if _, ok := last.Pattern.(*WildcardPattern); !ok {
+		p.errors = append(p.errors, "expected last pattern is '_' to match")
+		return nil
+	}
+
+	return mas
+}
+
+// pattern if gurad => body [,]
+func (p *Parser) parseMatchArm() *MatchArmExpr {
+	expr := &MatchArmExpr{Token: p.curToken}
+	pattern := p.parsePatternExpr()
+	var guard ExprNode
+	var body StmtNode
+
+	if p.nexType() == IF {
+		p.nextToken()
+		p.nextToken()
+		guard = p.parseExpr(LOWEST)
+	}
+
+	if !p.expectPeek(FAT_ARROW) {
+		return nil
+	}
+
+	p.nextToken()
+	if p.curType() == LBRACE {
+		body = p.parseBlockStmt()
+	} else {
+		body = p.parseExprStmt()
+
+		if p.nexType() == COMMA {
+			p.nextToken()
+		}
+	}
+
+	expr.Pattern = pattern
+	expr.Guard = guard
+	expr.Body = body
 
 	return expr
 }

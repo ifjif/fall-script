@@ -13,3 +13,8 @@ type Expr interface {
 	Node
 	exprNode()
 }
+
+type PatternNode interface {
+	Expr
+	patternNode()
+}

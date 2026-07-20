@@ -279,6 +279,10 @@ func (l *Lexer) tokenizeEq() Token {
 		l.readChar()
 		eq := l.input[pos:l.npos]
 		return NewToken(EQ, string(eq), line, col)
+	} else if l.peekChar() == '>' {
+		l.readChar()
+		fatArrow := l.input[pos:l.npos]
+		return NewToken(FAT_ARROW, string(fatArrow), line, col)
 	}
 
 	return NewToken(ASSIGN, string(ch), line, col)

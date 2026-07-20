@@ -42,6 +42,8 @@ func (a *Analyzer) analyzeExpr(expr ast.ExprNode) ir.Expr {
 		return a.analyzeFnExpr(expr)
 	case *ast.StructLiteralExpr:
 		return a.analyzeStructLiteralExpr(expr)
+	case *ast.MatchExpr:
+		return a.analyzeMatchExpr(expr)
 	}
 
 	return nil
@@ -262,4 +264,37 @@ func (a *Analyzer) analyzeStructLiteralExpr(expr *ast.StructLiteralExpr) *ir.Str
 	}
 
 	return &ir.StructLiteral{Token: expr.Token, Tag: tag, Pairs: pairs}
+}
+
+func (a *Analyzer) analyzeMatchExpr(expr *ast.MatchExpr) *ir.MatchExpr {
+	subject := a.analyzeExpr(expr.Subject)
+	arms := a.analyzeMatchArms(expr.Arms)
+
+	return &ir.MatchExpr{Token: expr.Token, Subject: subject, MatchArms: arms}
+}
+
+func (a *Analyzer) analyzeMatchArms(arms []*ast.MatchArmExpr) []*ir.MatchArmExpr {
+	iarms := make([]*ir.MatchArmExpr, len(arms))
+	for i, arm := range arms {
+		iarm := a.analyzeMatchArm(arm)
+		iarms[i] = iarm
+	}
+
+	return iarms
+}
+
+func (a *Analyzer) analyzeMatchArm(arm *ast.MatchArmExpr) *ir.MatchArmExpr {
+	a.enterBlock()
+	pattern := a.analyzePattern(arm.Pattern)
+	guard := a.analyzeExpr(arm.Guard)
+	body := a.analyzeStmt(arm.Body)
+	// 空块，添加null
+	if block, ok := body.(*ir.BlockStmt); ok {
+		if len(block.Stmts) == 0 {
+			block.Stmts = append(block.Stmts, &ir.ExprStmt{Token: block.Token, Expr: &ir.NullLiteral{Token: block.Token}})
+		}
+	}
+	a.leaveBlock()
+
+	return &ir.MatchArmExpr{Token: arm.Token, Pattern: pattern, Guard: guard, Body: body}
 }

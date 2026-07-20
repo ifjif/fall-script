@@ -8,6 +8,7 @@ import (
 
 type Parser struct {
 	l              *lexer.Lexer
+	exprKind       TokenType
 	curToken       Token
 	nexToken       Token
 	errors         []string

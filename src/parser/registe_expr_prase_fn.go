@@ -25,6 +25,7 @@ func (p *Parser) registeExprFn() {
 	p.registePrefixFn(LBRACE, p.parseHashExpr)
 	p.registePrefixFn(IF, p.parseIfExpr)
 	p.registePrefixFn(NULL, p.parseNullExpr)
+	p.registePrefixFn(MATCH, p.parseMatchExpr)
 
 	p.infixParseFns = make(map[TokenType]infixParseFn)
 	p.registeInfixFn(ASSIGN, p.parseAssignExpr)

@@ -66,6 +66,8 @@ func calcStringInfix(op string, left, right Object) Object {
 	switch op {
 	case "+":
 		return &String{Value: leftValue + rightValue}
+	case "==":
+		return boolToBoolObject(leftValue == rightValue)
 	case "||":
 		return boolToBoolObject(leftValue != "" || rightValue != "")
 	case "&&":

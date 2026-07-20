@@ -20,6 +20,9 @@
   5. `==`
   6. `!=`
 
+- **箭头**
+  1. `=>`
+
 - **逻辑运算符**
   1. `&&`
   2. `||`
@@ -66,6 +69,7 @@
 - `return`
 - `if`
 - `else`
+- `match`
 - `false`
 - `true`
 - `null`
@@ -102,6 +106,7 @@
 - `if(..){...}else if (...){...}else {...}`
 - `a.b`
 - `A{a:xx,b:xx,C:xx}`
+- `match xx { xx => xxx, xx => {xxx} _ =>{} }`
 
 ## 4. 运算符优先级
 
@@ -170,7 +175,66 @@
      arr[::]
      arr[:::]
 
-## 7.宏
+## 7.match
+
+    目前只支持 string bool null int 字面量
+
+    fn doMatch(v) {
+      match v {
+       0 => 0,
+       true => true,
+       false => false,
+       "abc" => "abc",
+       null => "是null",
+       1 => {
+           let a = 10
+           a
+       }
+       20 if true => "20 if true",
+       30 if false => "30 if false",
+       _ => {}
+      }
+    }
+
+    let result = doMatch(0)
+    puts(result)
+
+    result = doMatch(true)
+    puts(result)
+
+    result = doMatch(false)
+    puts(result)
+
+    result = doMatch("abc")
+    puts(result)
+
+    result = doMatch(null)
+    puts(result)
+
+    result = doMatch(1)
+    puts(result)
+
+    result = doMatch(20)
+    puts(result)
+
+    result = doMatch(30)
+    puts(result)
+
+    result = doMatch(40)
+    puts(result)
+
+    结果：
+      0
+      true
+      false
+      abc
+      是null
+      10
+      20 if true
+      null
+      null
+
+## 8.宏
 
 **不支持宏生宏**
 
@@ -250,7 +314,7 @@
       result=
       router-result
 
-## 8.struct
+## 9.struct
 
 **test_struct_module3.fs 文件**
 
@@ -397,13 +461,13 @@
     访问St1组合中St2组合的St3方法GetSt3A,st2显示访问: st1.St2.St3.GetSt3A
     st3a
 
-## 9.内置函数
+## 10.内置函数
 
 - `len`
 - `byte`
 - `puts`
 
-## 10.操作码
+## 11.操作码
 
 - `Nop(u8:0)`
 - `Null_`
@@ -450,7 +514,7 @@
 - `Return`
 - `XReturn`
 
-## 11.export元信息格式(大端序)
+## 12.export元信息格式(大端序)
 
     count               u16
     export_meta{
@@ -479,7 +543,7 @@
       }
     }
 
-## 12.二进制格式(大端序)
+## 13.二进制格式(大端序)
 
     header{
       SIGNATURE = length(varint) byte("fallscript")

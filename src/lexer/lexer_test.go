@@ -33,6 +33,8 @@ import
 export
 struct
 a.b
+match
+=>
 `,
 			[]Token{
 				{Type: PLUS, Value: "+", Line: 1, Col: 1},
@@ -81,7 +83,9 @@ a.b
 				{Type: IDENT, Value: "a", Line: 19, Col: 1},
 				{Type: DOT, Value: ".", Line: 19, Col: 2},
 				{Type: IDENT, Value: "b", Line: 19, Col: 3},
-				{Type: EOF, Value: "", Line: 20, Col: 1},
+				{Type: MATCH, Value: "match", Line: 20, Col: 1},
+				{Type: FAT_ARROW, Value: "=>", Line: 21, Col: 1},
+				{Type: EOF, Value: "", Line: 22, Col: 1},
 			},
 		},
 	}

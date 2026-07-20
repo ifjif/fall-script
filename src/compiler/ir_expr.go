@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"fmt"
+
 	"zzc/fall-script/src/code"
 	"zzc/fall-script/src/ir"
 	"zzc/fall-script/src/object"
@@ -42,6 +44,8 @@ func (c *Compiler) compileExpr(expr ir.Expr) {
 		c.compileFnExprIr(expr)
 	case *ir.StructLiteral:
 		c.compileStructLiteral(expr)
+	case *ir.MatchExpr:
+		c.compileMatchExpr(expr)
 	}
 }
 
@@ -306,4 +310,69 @@ func (c *Compiler) compileStructLiteral(expr *ir.StructLiteral) {
 		c.compileExpr(pair.Value)
 	}
 	c.emit(code.InitStruct, len(expr.Pairs))
+}
+
+// ===================================编译match
+func (c *Compiler) compileMatchExpr(expr *ir.MatchExpr) {
+	c.compileExpr(expr.Subject)
+	arms := c.compileMatchArmExprs(expr.MatchArms)
+
+	fmt.Println(arms)
+	matchLastInstructionPos := len(c.CurrentInstructions())
+	for _, arm := range arms {
+		c.changeOperand(arm, matchLastInstructionPos)
+	}
+
+	// match只返回一个值
+	c.updateScopeStackDepth(1 - len(arms))
+}
+
+func (c *Compiler) compileMatchArmExprs(arms []*ir.MatchArmExpr) []int {
+	pjs := make([]int, 0)
+	for _, arm := range arms {
+		js := c.compileMatchArmExpr(arm)
+		if js >= 0 {
+			pjs = append(pjs, js)
+		}
+	}
+
+	return pjs
+}
+
+func (c *Compiler) compileMatchArmExpr(arm *ir.MatchArmExpr) int {
+	pattern := arm.Pattern
+	_, ok := pattern.(*ir.WildcardPattern)
+
+	pjif := -1
+	gjif := -1
+	if !ok {
+		c.compilePattern(arm.Pattern)
+		pjif = c.emit(code.JumpIsFalse, 9999)
+		if arm.Guard != nil {
+			c.compileExpr(arm.Guard)
+			gjif = c.emit(code.JumpIsFalse, 9999)
+		}
+	}
+
+	// 弹出subject
+	c.emit(code.Pop)
+
+	c.compileStmt(arm.Body)
+	if c.lastInstructionIs(code.Pop) {
+		c.removeLastPopInst()
+	} else {
+		c.emit(code.Null_)
+	}
+
+	if !ok {
+		pj := c.emit(code.Jump, 9999)
+		c.changeOperand(pjif, len(c.CurrentInstructions()))
+		if gjif >= 0 {
+			c.changeOperand(gjif, len(c.CurrentInstructions()))
+		}
+
+		return pj
+	}
+
+	return -1
 }
