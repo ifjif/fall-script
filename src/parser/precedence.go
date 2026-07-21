@@ -11,6 +11,7 @@ const (
 	LOGIC       // || &&
 	EQUALS      // == !=
 	LESSGREATER // > >= < <=
+	BIT         // | &
 	SUM         // +, -
 	PRODUCT     // *, /
 	PREFIX      // - !
@@ -29,6 +30,8 @@ var precedences = map[token.TokenType]Precedence{
 	token.LE:       LESSGREATER,
 	token.GT:       LESSGREATER,
 	token.GE:       LESSGREATER,
+	token.BOR:      BIT,
+	token.BAND:     BIT,
 	token.PLUS:     SUM,
 	token.MINUS:    SUM,
 	token.ASTERISK: PRODUCT,

@@ -13,6 +13,8 @@ const (
 	Pop
 	Gt
 	Ge
+	Band
+	Bor
 	Add
 	Sub
 	Mul

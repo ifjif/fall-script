@@ -152,6 +152,10 @@ func (c *Compiler) compileInfixExprIr(expr *ir.InfixExpr) {
 		c.emit(code.Eq)
 	case "!=":
 		c.emit(code.Neq)
+	case "&":
+		c.emit(code.Band)
+	case "|":
+		c.emit(code.Bor)
 	}
 }
 

@@ -1,4 +1,4 @@
-  fn doMatch(v) {
+fn doMatch(v) {
    match v {
     0 => 0,
     true => true,
@@ -13,7 +13,7 @@
     30 if false => "30 if false",
     _ => {}
   }
- }
+}
 
 let result = doMatch(0) 
 puts(result)

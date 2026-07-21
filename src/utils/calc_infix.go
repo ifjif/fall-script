@@ -38,6 +38,10 @@ func calcIntegerInfix(op string, left, right Object) Object {
 			return DivideByZeroErr(left, right, op)
 		}
 		return &Integer{Value: leftValue / rightValue}
+	case "&":
+		return &Integer{Value: leftValue & rightValue}
+	case "|":
+		return &Integer{Value: leftValue | rightValue}
 	case ">":
 		return boolToBoolObject(leftValue > rightValue)
 	case ">=":

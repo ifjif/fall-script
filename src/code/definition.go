@@ -17,6 +17,8 @@ var definitions = map[OpCode]*Definition{
 	Pop:         {"pop", []int{}},
 	Gt:          {"gt", []int{}},
 	Ge:          {"ge", []int{}},
+	Band:        {"band", []int{}},
+	Bor:         {"bor", []int{}},
 	Add:         {"add", []int{}},
 	Sub:         {"sub", []int{}},
 	Mul:         {"mul", []int{}},

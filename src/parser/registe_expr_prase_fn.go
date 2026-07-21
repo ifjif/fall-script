@@ -29,6 +29,8 @@ func (p *Parser) registeExprFn() {
 
 	p.infixParseFns = make(map[TokenType]infixParseFn)
 	p.registeInfixFn(ASSIGN, p.parseAssignExpr)
+	p.registeInfixFn(BOR, p.parseInfixExpr)
+	p.registeInfixFn(BAND, p.parseInfixExpr)
 	p.registeInfixFn(PLUS, p.parseInfixExpr)
 	p.registeInfixFn(MINUS, p.parseInfixExpr)
 	p.registeInfixFn(ASTERISK, p.parseInfixExpr)

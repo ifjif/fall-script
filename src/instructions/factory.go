@@ -23,6 +23,8 @@ var (
 	pop         = &Pop{}
 	gt          = &Gt{}
 	ge          = &Ge{}
+	band        = &Band{}
+	bor         = &Bor{}
 	add         = &Add{}
 	sub         = &Sub{}
 	mul         = &Mul{}
@@ -58,6 +60,10 @@ func NewInstruction(opcode byte) base.Instruction {
 		return gt
 	case code.Ge:
 		return ge
+	case code.Band:
+		return band
+	case code.Bor:
+		return bor
 	case code.Add:
 		return add
 	case code.Sub:
