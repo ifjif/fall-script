@@ -180,22 +180,24 @@
 
 ## 7.match
 
-    目前只支持 string bool null int 字面量
+    支持 string bool null int 字面量
+    支持 多重匹配 x | xx
 
     fn doMatch(v) {
-      match v {
-       0 => 0,
-       true => true,
-       false => false,
-       "abc" => "abc",
-       null => "是null",
-       1 => {
-           let a = 10
-           a
-       }
-       20 if true => "20 if true",
-       30 if false => "30 if false",
-       _ => {}
+       match v {
+        0 => 0,
+        true => true,
+        false => false,
+        "abc" => "abc",
+          null => "是null",
+        1 => {
+            let a = 10
+            a
+        }
+        2 | 3 | 4 => "2,3,4"
+        20 if true => "20 if true",
+        30 if false => "30 if false",
+        _ => {}
       }
     }
 
@@ -217,6 +219,15 @@
     result = doMatch(1)
     puts(result)
 
+    result = doMatch(2)
+    puts(result)
+
+    result = doMatch(3)
+    puts(result)
+
+    result = doMatch(4)
+    puts(result)
+
     result = doMatch(20)
     puts(result)
 
@@ -233,6 +244,9 @@
       abc
       是null
       10
+      2,3,4
+      2,3,4
+      2,3,4
       20 if true
       null
       null

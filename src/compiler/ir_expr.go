@@ -350,8 +350,7 @@ func (c *Compiler) compileMatchArmExpr(arm *ir.MatchArmExpr) int {
 	pjif := -1
 	gjif := -1
 	if !ok {
-		c.compilePattern(arm.Pattern)
-		pjif = c.emit(code.JumpIsFalse, 9999)
+		pjif = c.compilePattern(arm.Pattern)
 		if arm.Guard != nil {
 			c.compileExpr(arm.Guard)
 			gjif = c.emit(code.JumpIsFalse, 9999)

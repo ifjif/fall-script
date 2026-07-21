@@ -9,6 +9,7 @@ fn doMatch(v) {
         let a = 10
         a
     }
+    2 | 3 | 4 => "2,3,4"
     20 if true => "20 if true",
     30 if false => "30 if false",
     _ => {}
@@ -31,6 +32,15 @@ result = doMatch(null)
 puts(result)
 
 result = doMatch(1)
+puts(result)
+
+result = doMatch(2)
+puts(result)
+
+result = doMatch(3)
+puts(result)
+
+result = doMatch(4)
 puts(result)
 
 result = doMatch(20)
