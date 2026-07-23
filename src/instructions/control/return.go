@@ -19,6 +19,9 @@ func (r *Return) Execute(frame *rt.Frame) {
 		prevModule = lower.Closure().OwnerModule
 		if curModule == prevModule {
 			lower.PushStack(object.NULL)
+		} else if curModule.Status == object.Initialized {
+			// 可能是模块的结束,不是压栈
+			lower.PushStack(object.NULL)
 		}
 	}
 	thread := frame.Thread()
@@ -34,6 +37,7 @@ type XReturn struct {
 	base.NoOperandInstruction
 }
 
+// toto,如果模块有返回值，需要处理
 func (xr *XReturn) Execute(frame *rt.Frame) {
 	rv := frame.PopStack()
 

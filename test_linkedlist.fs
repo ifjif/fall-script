@@ -7,7 +7,7 @@ struct Node {
   next:
 }
 
-// 顶部提升
+// 槽位顶部提升
 fn NewNode(value) {
   return Node {
     value:value,

@@ -102,7 +102,14 @@ func (fv *FsVM) link(mo *object.Module, cmo *object.CompiledModule, dir string) 
 	consts := mo.Cf.Constants
 	for i, iref := range mo.Imports {
 		relativePath := consts[iref.From].Inspect()
-		source := module.ResolveImportPath(filepath.Join(dir, mo.Name), relativePath)
+
+		currentFilePath := filepath.Join(dir, mo.Name)
+		mDir := filepath.Dir(mo.Name)
+		if mDir == dir {
+			currentFilePath = mo.Name
+		}
+
+		source := module.ResolveImportPath(currentFilePath, relativePath)
 		target, ok := fv.moduleRegister[source]
 		if !ok {
 			nmod := fv.loader.LoadFile(source)

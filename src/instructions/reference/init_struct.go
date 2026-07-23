@@ -27,6 +27,9 @@ func (is *InitStruct) Execute(frame *rt.Frame) {
 	fields := structMeta.Fields
 	count := structMeta.FieldCount
 	slots := make([]object.Object, count)
+	for i := range slots {
+		slots[i] = object.NULL
+	}
 	instance := &object.StructInstance{
 		StructMeta: structMeta,
 		Slots:      slots,

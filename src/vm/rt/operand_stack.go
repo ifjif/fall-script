@@ -33,7 +33,7 @@ func (os *OperandStack) Pop() object.Object {
 func (os *OperandStack) Pops(num int) []object.Object {
 	last := num - 1
 	result := make([]object.Object, num)
-	for i := 0; i < num; i++ {
+	for i := range num {
 		result[last-i] = os.Pop()
 	}
 

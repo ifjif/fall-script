@@ -92,7 +92,7 @@ func (c *Compiler) getStackDelta(op OpCode, operands []int) int {
 	case SetField:
 		return -2
 	case CallMethod:
-		return -(operand + 2)
+		return -(operand + 1)
 	case Return:
 		return 0
 	case XReturn:
